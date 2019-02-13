@@ -37,7 +37,7 @@ public class Validator
 	}
 	
 	public ValidatedJSONSchema addSchema(File jsonSchemaFile)
-		throws IOException, ValidationException, SchemaNoIdException, SchemaRepeatedIdException
+		throws IOException, ValidationException, SchemaNoIdException, SchemaNoSchemaException, SchemaRepeatedIdException, UnsupportedSchemaException
 	{
 		try(
 			InputStream jsonStream = new BufferedInputStream(new FileInputStream(jsonSchemaFile),1024*1024);
@@ -51,7 +51,7 @@ public class Validator
 	}
 	
 	public ValidatedJSONSchema addSchema(JSONObject jsonSchema,String jsonSchemaSource)
-		throws ValidationException, SchemaNoIdException, SchemaRepeatedIdException
+		throws ValidationException, SchemaNoIdException, SchemaNoSchemaException, SchemaRepeatedIdException, UnsupportedSchemaException
 	{
 		ValidatedJSONSchema bSchemaDoc = new ValidatedJSONSchema(jsonSchema,this,jsonSchemaSource);
 		

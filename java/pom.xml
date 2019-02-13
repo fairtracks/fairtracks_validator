@@ -6,15 +6,15 @@
 	<groupId>org.elixir-europe.is.fairification-genomic-data-tracks</groupId>
 	<artifactId>validator</artifactId>
 	<packaging>jar</packaging>
-	<version>0.1-SNAPSHOT</version>
+	<version>0.2-SNAPSHOT</version>
 	<name>fair-gtrack-validator</name>
 	<url>https://github.com/inab/GenomicDataTracks_JSON_schemas</url>
 	
 	<dependencies>
 		<dependency>
-			<groupId>org.everit.json</groupId>
-			<artifactId>org.everit.json.schema</artifactId>
-			<version>1.5.1</version>
+			<groupId>com.github.erosb</groupId>
+			<artifactId>everit-json-schema</artifactId>
+			<version>1.11.0</version>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>

@@ -89,14 +89,22 @@ public class FairGTrackValidatorCli
 					ve.getCausingExceptions().stream().forEach(se -> System.err.printf("\t\tPath: %s . Message: %s\n",se.getPointerToViolation(),se.getMessage()));
 					System.err.flush();
 					numFileFail++;
-				} catch(SchemaNoIdException snie) {
-					System.err.println("\tIGNORE: "+snie.getMessage());
-					System.err.flush();
-					numFileIgnore++;
 				} catch(SchemaRepeatedIdException srie) {
 					System.err.println("\tERROR: "+srie.getMessage());
 					System.err.flush();
 					numFileFail++;
+				} catch(SchemaNoIdException snie) {
+					System.err.println("\tIGNORE: "+snie.getMessage());
+					System.err.flush();
+					numFileIgnore++;
+				} catch(SchemaNoSchemaException snse) {
+					System.err.println("\tIGNORE: "+snse.getMessage());
+					System.err.flush();
+					numFileIgnore++;
+				} catch(UnsupportedSchemaException use) {
+					System.err.println("\tIGNORE/FIXME: "+use.getMessage());
+					System.err.flush();
+					numFileIgnore++;
 				} catch(IOException ioe) {
 					System.err.printf("FATAL ERROR: Unable to open schema file %s. Reason: %s\n",jsonSchemaFile.getPath(),ioe.getMessage());
 					System.err.flush();
