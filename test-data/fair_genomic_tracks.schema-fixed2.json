@@ -54,6 +54,7 @@
                                 "exp_type_url": {
                                     "description": "Type of experiment (URL linking to the a term in the OBI ontology)",
                                     "type": "string",
+                                    "format": "term",
                                     "ontology": "http://purl.obolibrary.org/obo/obi/2018-08-27/obi.owl",
                                     "examples": [
                                         "http://purl.obolibrary.org/obo/OBI_0000716"
@@ -82,9 +83,11 @@
                         "contact_orcid_id": {
                             "description": "ORCID id to contact person for experiment",
                             "type": "string",
+                            "format": "curie",
+                            "matchType": "canonical",
                             "namespace": "orcid",
                             "examples": [
-                                "https://orcid.org/0000-0002-9103-1077"
+                                "orcid:0000-0002-9103-1077"
                             ]
                         },
                         "lab_protocol_description": {
@@ -140,14 +143,16 @@
                             "properties": {
                                 "sample_type_url": {
                                     "description": "Type of sample (URL linking to the a term either of the EFO, CL or UBERON ontologies, depending on type)",
-                                    "type": "term",
+                                    "type": "string",
+                                    "format": "term",
                                     "ontology": [
                                         "http://www.ebi.ac.uk/efo/releases/v2018-02-15/efo.owl",
                                         "http://purl.obolibrary.org/obo/cl/releases/2018-07-07/cl.owl",
                                         "http://purl.obolibrary.org/obo/uberon/releases/2018-07-30/uberon.owl"
                                     ],
                                     "ancestors": [
-										"http://purl.obolibrary.org/obo/BTO_0000007"
+					"http://www.ebi.ac.uk/efo/EFO_0000322",
+                                        "http://purl.obolibrary.org/obo/CL_0000010"
                                     ],
                                     "examples": [
                                         "http://www.ebi.ac.uk/efo/EFO_0003042"
@@ -201,7 +206,8 @@
                                 },
                                 "pubmed_id": {
                                     "description": "Pubmed id (dataset or publication)",
-                                    "type": "curie",
+                                    "type": "string",
+                                    "format": "curie",
                                     "namespace": "pubmed",
                                     "examples": [
                                         "28459977"
@@ -219,14 +225,18 @@
                                 "disease_url": {
                                     "description": "Disease which is studied, if any (URL linking to a term in a set of ontologies, yet to be fully determined)",
                                     "type": "string",
+                                    "format": "term",
                                     "ontology": "http://purl.obolibrary.org/obo/ncit/releases/2018-04-05/ncit.owl",
                                     "examples": [
-                                        "https://ncim.nci.nih.gov/ncimbrowser/ConceptReport.jsp?dictionary=NCI%20Metathesaurus&code=C1272460"
+                                        "http://purl.obolibrary.org/obo/NCIT_C48660"
                                     ]
                                 },
                                 "disease_term": {
                                     "description": "Disease which is studied, if any (Textual version of disease_url, according to the ontology used)",
                                     "type": "string",
+                                    "format": "term",
+                                    "ontology": "http://purl.obolibrary.org/obo/ncit/releases/2018-04-05/ncit.owl",
+                                    "matchType": "label",
                                     "examples": [
                                         "Not Applicable"
                                     ],

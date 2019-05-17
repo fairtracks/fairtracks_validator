@@ -12,7 +12,7 @@
                 "exp_type_term": "ChIP-seq assay"
             },
             "target": "MITF",
-            "contact_orcid_id": "https://orcid.org/0000-0002-9103-1077",
+            "contact_orcid_id": "orcid:0000-0002-9103-1077",
             "lab_protocol_description": "Some text including date",
             "compute_protocol_description": "Some text including date"
         },
@@ -34,7 +34,7 @@
                 "pubmed_id": "28459977"
             },
             "phenotype": {
-                "disease_url": "https://ncim.nci.nih.gov/ncimbrowser/ConceptReport.jsp?dictionary=NCI%20Metathesaurus&code=C1272460",
+                "disease_url": "http://purl.obolibrary.org/obo/NCIT_C48660",
                 "disease_term": "Not Applicable"
             }
         },
