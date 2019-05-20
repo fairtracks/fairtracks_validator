@@ -10,11 +10,25 @@
 	<name>fair-gtrack-validator</name>
 	<url>https://github.com/inab/GenomicDataTracks_JSON_schemas</url>
 	
+	<scm>
+		<connection>scm:git:https://github.com/fairtracks/json-schema.git</connection>
+		<developerConnection>scm:git:https://jmfernandez@github.com/fairtracks/json-schema.git</developerConnection>
+		<url>https://github.com/fairtracks/json-schema</url>
+	</scm>
+	
 	<dependencies>
+		<!--
 		<dependency>
 			<groupId>com.github.erosb</groupId>
 			<artifactId>everit-json-schema</artifactId>
-			<version>1.11.0</version>
+			<version>1.11.1</version>
+		</dependency>
+		-->
+		<!-- This dependency is locally installed using the scm plugin -->
+		<dependency>
+			<groupId>org.everit.json</groupId>
+			<artifactId>org.everit.json.schema</artifactId>
+			<version>0.0.0-develop</version>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
@@ -112,6 +126,28 @@
 				</executions>
 			</plugin>
 			-->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-scm-plugin</artifactId>
+				<version>1.11.2</version>
+				<configuration>
+					<checkoutDirectory>${project.build.directory}/json-schema_extendend-custom-format</checkoutDirectory>
+					<goals>-Dmaven.javadoc.skip=true,-Djapicmp.skip=true,install</goals>
+					<scmVersionType>branch</scmVersionType>
+					<scmVersion>extended_custom_format</scmVersion>
+					<providerImplementations>
+						<git>jgit</git>
+					</providerImplementations>
+					<skipCheckoutIfExists>true</skipCheckoutIfExists>
+				</configuration>
+				<dependencies>
+					<dependency>
+						<groupId>org.apache.maven.scm</groupId>
+						<artifactId>maven-scm-provider-jgit</artifactId>
+						<version>1.11.2</version>
+					</dependency>
+				</dependencies>
+			</plugin>
 		</plugins>
 	</build>
 </project>
