@@ -30,6 +30,13 @@
 			<artifactId>org.everit.json.schema</artifactId>
 			<version>0.0.0-develop</version>
 		</dependency>
+		<!-- This dependency is needed by the CURIE extension -->
+		<dependency>
+			<groupId>org.xerial</groupId>
+			<artifactId>sqlite-jdbc</artifactId>
+			<version>3.27.2.1</version>
+		</dependency>
+		<!-- This dependency is for testing -->
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
