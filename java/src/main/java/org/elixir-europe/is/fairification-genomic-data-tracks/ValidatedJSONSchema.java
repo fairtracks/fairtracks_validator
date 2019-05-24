@@ -9,6 +9,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.elixir_europe.is.fairification_genomic_data_tracks.extensions.CurieFormat;
+
 import org.everit.json.schema.Schema;
 import org.everit.json.schema.ValidationException;
 import org.everit.json.schema.loader.SchemaLoader;
@@ -67,7 +69,13 @@ public class ValidatedJSONSchema {
 			}
 			
 			if(schemaId != null) {
-				validatorMapper.put(schemaId,SchemaLoader.load(parsedMetaSchema));
+				// Create the schema, registering the custom formats
+				SchemaLoader schemaLoader = SchemaLoader.builder()
+					.schemaJson(parsedMetaSchema)
+					.addFormatValidator(CurieFormat.DEFAULT_FORMAT_NAME, new CurieFormat())
+					.build();
+				
+				validatorMapper.put(schemaId,schemaLoader.load().build());
 			}
 		}
 		

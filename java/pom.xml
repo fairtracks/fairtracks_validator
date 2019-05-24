@@ -36,6 +36,12 @@
 			<artifactId>sqlite-jdbc</artifactId>
 			<version>3.27.2.1</version>
 		</dependency>
+		<!-- this dependency tells the XDG directories -->
+		<dependency>
+			<groupId>net.kothar</groupId>
+			<artifactId>xdg-java</artifactId>
+			<version>0.1.1</version>
+		</dependency>
 		<!-- This dependency is for testing -->
 		<dependency>
 			<groupId>junit</groupId>
