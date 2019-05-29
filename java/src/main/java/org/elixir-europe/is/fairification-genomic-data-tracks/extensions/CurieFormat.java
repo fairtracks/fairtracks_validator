@@ -8,6 +8,7 @@ import java.net.URISyntaxException;
 
 import java.sql.SQLException;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -90,9 +91,17 @@ public class CurieFormat
 		List<String> nslist = emptyList();
 		if(unprocessedProperties.containsKey(NAMESPACE_ATTR)) {
 			try {
-				nslist = (List<String>) unprocessedProperties.get(NAMESPACE_ATTR);
+				Object nsObj = unprocessedProperties.get(NAMESPACE_ATTR);
+				if(nsObj instanceof String) {
+					nslist = new ArrayList<>();
+					nslist.add((String)nsObj);
+				} else if(nsObj instanceof List) {
+					nslist = (List<String>) nsObj;
+				} else {
+					return Optional.of(String.format("property '%s' from JSON Schema should be either a string or an array of strings",NAMESPACE_ATTR));
+				}
 			} catch(ClassCastException cce) {
-				return Optional.of(String.format("property '%s' from JSON Schema should be an array of strings",NAMESPACE_ATTR));
+				return Optional.of(String.format("Problems while casting value from property '%s'",NAMESPACE_ATTR));
 			}
 		}
 		
