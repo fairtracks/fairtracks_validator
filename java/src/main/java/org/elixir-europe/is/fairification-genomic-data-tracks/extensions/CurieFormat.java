@@ -64,7 +64,7 @@ public class CurieFormat
 	
 	@Override
 	public Optional<String> validate(final String subject, final Map<String, Object> unprocessedProperties) {
-		MatchType matchType = MatchType.CANONICAL;
+		MatchType matchType = MatchType.LOOSE;
 		
 		if(unprocessedProperties.containsKey(MATCHTYPE_ATTR)) {
 			String matchTypeStr = null;
@@ -128,8 +128,10 @@ public class CurieFormat
 			prefix = parsed.getScheme();
 			if(prefix != null) {
 				// Should we internally promote the matchType?
-				if(prefix.length() > 0 && matchType == MatchType.LOOSE) {
-					matchType = MatchType.CANONICAL;
+				if(prefix.length() > 0) {
+					if(matchType == MatchType.LOOSE) {
+						matchType = MatchType.CANONICAL;
+					}
 				} else {
 					prefix = null;
 				}
