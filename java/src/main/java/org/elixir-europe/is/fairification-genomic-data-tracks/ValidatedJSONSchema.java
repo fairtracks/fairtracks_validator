@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.elixir_europe.is.fairification_genomic_data_tracks.extensions.CurieFormat;
+import org.elixir_europe.is.fairification_genomic_data_tracks.extensions.TermFormat;
 
 import org.everit.json.schema.Schema;
 import org.everit.json.schema.ValidationException;
@@ -72,7 +73,6 @@ public class ValidatedJSONSchema {
 				// Create the schema, registering the custom formats
 				SchemaLoader schemaLoader = SchemaLoader.builder()
 					.schemaJson(parsedMetaSchema)
-					.addFormatValidator(CurieFormat.DEFAULT_FORMAT_NAME, new CurieFormat())
 					.build();
 				
 				validatorMapper.put(schemaId,schemaLoader.load().build());
@@ -257,9 +257,9 @@ public class ValidatedJSONSchema {
 		// # my $jsonSchemaP = $v->schema($jsonSchema)->schema;
 		// # This step is done, so we fetch a complete schema
 		// # $jsonSchema = $jsonSchemaP->data;
-		if(jsonSchema.has(ID_KEY)) {
+		if(jsonSchema.has(ID_KEY) || jsonSchema.has(NEW_ID_KEY)) {
 			try{
-				jsonSchemaURI = new URI(jsonSchema.getString(ID_KEY));
+				jsonSchemaURI = new URI(jsonSchema.getString(jsonSchema.has(ID_KEY) ? ID_KEY : NEW_ID_KEY));
 				if(p_schemaHash!=null && p_schemaHash.containsSchema(jsonSchemaURI)) {
 					// Throw exception due repeated schema
 					throw new SchemaRepeatedIdException(jsonSchemaSource,p_schemaHash.getSchema(jsonSchemaURI).getJsonSchemaSource());
@@ -305,8 +305,15 @@ public class ValidatedJSONSchema {
 				 jsonSchema.remove("dependencies");
 			 }
 		}
+		
 		// And at last
-		jsonSchemaVal = SchemaLoader.load(jsonSchema);
+		SchemaLoader jsonSchemaValLoader = SchemaLoader.builder()
+			.schemaJson(jsonSchema)
+			.addFormatValidator(CurieFormat.DEFAULT_FORMAT_NAME, new CurieFormat())
+			.addFormatValidator(TermFormat.DEFAULT_FORMAT_NAME, new TermFormat())
+			.build();
+		
+		jsonSchemaVal = jsonSchemaValLoader.load().build();
 	}
 	
 	public Collection<String> getWarnings() {

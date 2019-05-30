@@ -6,15 +6,28 @@
 	<groupId>org.elixir-europe.is.fairification-genomic-data-tracks</groupId>
 	<artifactId>validator</artifactId>
 	<packaging>jar</packaging>
-	<version>0.2-SNAPSHOT</version>
+	<version>0.3-SNAPSHOT</version>
 	<name>fair-gtrack-validator</name>
-	<url>https://github.com/inab/GenomicDataTracks_JSON_schemas</url>
+	<url>https://github.com/fairtracks/fairtracks_standard</url>
 	
 	<scm>
 		<connection>scm:git:https://github.com/fairtracks/json-schema.git</connection>
 		<developerConnection>scm:git:https://jmfernandez@github.com/fairtracks/json-schema.git</developerConnection>
 		<url>https://github.com/fairtracks/json-schema</url>
 	</scm>
+	
+	<!-- Fixing to RDF4J 2.5.2 -->
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>org.eclipse.rdf4j</groupId>
+				<artifactId>rdf4j-bom</artifactId>
+				<version>2.5.2</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
 	
 	<dependencies>
 		<!--
@@ -24,6 +37,11 @@
 			<version>1.11.1</version>
 		</dependency>
 		-->
+		<dependency>
+			<groupId>org.json</groupId>
+			<artifactId>json</artifactId>
+			<version>20180130</version>
+		</dependency>
 		<!-- This dependency is locally installed using the scm plugin -->
 		<dependency>
 			<groupId>org.everit.json</groupId>
@@ -36,11 +54,28 @@
 			<artifactId>sqlite-jdbc</artifactId>
 			<version>3.27.2.1</version>
 		</dependency>
-		<!-- this dependency tells the XDG directories -->
+		<!-- This dependency tells the XDG directories -->
 		<dependency>
 			<groupId>net.kothar</groupId>
 			<artifactId>xdg-java</artifactId>
 			<version>0.1.1</version>
+		</dependency>
+		<!-- These dependencies are needed by the "term" extension -->
+		<dependency>
+			<groupId>org.eclipse.rdf4j</groupId>
+			<artifactId>rdf4j-repository-manager</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.eclipse.rdf4j</groupId>
+			<artifactId>rdf4j-repository-sail</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.eclipse.rdf4j</groupId>
+			<artifactId>rdf4j-sail-nativerdf</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.eclipse.rdf4j</groupId>
+			<artifactId>rdf4j-rio-rdfxml</artifactId>
 		</dependency>
 		<!-- This dependency is for testing -->
 		<dependency>
