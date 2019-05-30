@@ -182,8 +182,9 @@ public class FairGTrackValidatorCli
 				try {
 					ValidableDoc bDoc = ValidableDoc.parseFile(jsonFile);
 					try {
-						p_schemaHash.validatePass1(bDoc);
 						System.out.printf("\t- Using %s schema\n",bDoc.getJsonSchemaId());
+						System.out.flush();
+						p_schemaHash.validatePass1(bDoc);
 						System.out.println("\t- Validated!\n");
 						System.out.flush();
 						numFilePass1OK++;
@@ -203,14 +204,13 @@ public class FairGTrackValidatorCli
 						jsonFiles.set(iJsonFile,null);
 						numFilePass1Fail++;
 					} catch(ValidationException ve) {
-						System.out.printf("\t- Using %s schema\n",bDoc.getJsonSchemaId());
-						System.out.flush();
 						System.err.println("\t- ERRORS:");
 						ve.getCausingExceptions().stream().forEach(se -> System.err.printf("\t\tPath: %s . Message: %s\n",se.getPointerToViolation(),se.getMessage()));
 						System.err.flush();
 						//Masking it for the next loop
 						jsonFiles.set(iJsonFile,null);
 						numFilePass1Fail++;
+						ve.printStackTrace();
 					} catch(SchemaDuplicatedPrimaryKeyException sdpke) {
 						System.out.printf("\t- Using %s schema\n",bDoc.getJsonSchemaId());
 						System.out.flush();
@@ -279,7 +279,7 @@ public class FairGTrackValidatorCli
 		System.out.printf("\nVALIDATION STATS:\n\t- directories (%d OK, %d failed)\n\t- PASS 1 (%d OK, %d ignored, %d error)\n\t- PASS 2 (%d OK, %d error)\n",numDirOK,numDirFail,numFilePass1OK,numFilePass1Ignore,numFilePass1Fail,numFilePass2OK,numFilePass2Fail);
 	}
 	
-	public static void main( String[] args )
+	public final static void main( String[] args )
 	{
 		if(args.length > 0) {
 			List<File> jsonFiles = Arrays.stream(args).map(jsonPath -> new File(jsonPath)).collect(Collectors.toCollection(ArrayList::new));
