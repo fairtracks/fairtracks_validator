@@ -95,7 +95,7 @@ public class CurieCache
 	
 	// Insert the contents into the namespaces table
 	private final static String NAMESPACES_INSERT_DML =
-	"INSERT INTO namespaces VALUES (?,?,?,?)";
+	"INSERT INTO namespaces(id,namespace,pattern,name) VALUES (?,?,?,?)";
 	
 	// Count the number of namespaces
 	private final static String NAMESPACES_COUNT_DML =
