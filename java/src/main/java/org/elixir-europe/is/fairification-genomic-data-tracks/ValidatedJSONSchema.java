@@ -27,7 +27,6 @@ public class ValidatedJSONSchema {
 	protected final static String FOREIGN_KEYS_KEY = "foreign_keys";
 	protected final static String ID_KEY = "id";
 	protected final static String NEW_ID_KEY = "$id";
-	protected final static String SCHEMA_KEY = "$schema";
 	protected final static String ITEMS_KEY = "items";
 	protected final static String MEMBERS_KEY = "members";
 	protected final static String PRIMARY_KEY_KEY = "primary_key";
@@ -249,8 +248,8 @@ public class ValidatedJSONSchema {
 		this.warnings = new ArrayList<>();
 		
 		Schema validator = null;
-		if(jsonSchema.has(SCHEMA_KEY)) {
-			String schemaId = jsonSchema.getString(SCHEMA_KEY);
+		if(jsonSchema.has(ValidableDoc.SCHEMA_KEY)) {
+			String schemaId = jsonSchema.getString(ValidableDoc.SCHEMA_KEY);
 			if(ValidatorMapper.containsKey(schemaId)) {
 				validator = ValidatorMapper.get(schemaId);
 			} else {

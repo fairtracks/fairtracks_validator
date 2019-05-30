@@ -106,7 +106,7 @@ public class FairGTrackValidatorCli
 					
 					String idKey = jsonSchema.has(ValidatedJSONSchema.NEW_ID_KEY) ? ValidatedJSONSchema.NEW_ID_KEY : ValidatedJSONSchema.ID_KEY;
 					
-					String jsonSchemaURI = jsonSchema.optString(idKey);
+					String jsonSchemaURI = jsonSchema.optString(idKey,null);
 					if(jsonSchemaURI != null) {
 						if(uriLoad.containsKey(jsonSchemaURI)) {
 							numFileIgnore++;
