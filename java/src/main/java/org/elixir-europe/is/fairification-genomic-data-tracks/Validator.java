@@ -12,6 +12,7 @@ import java.net.URI;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import static java.util.Collections.emptyMap;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -33,7 +34,7 @@ public class Validator
 	protected Map<URI,ValidatedJSONSchema> schemaHash;
 	
 	public Validator() {
-		schemaHash = new HashMap<URI,ValidatedJSONSchema>();
+		schemaHash = new HashMap<>();
 	}
 	
 	public ValidatedJSONSchema addSchema(File jsonSchemaFile)
@@ -45,15 +46,26 @@ public class Validator
 		) {
 			JSONTokener jt = new JSONTokener(jsonReader);
 			JSONObject jsonSchema = new JSONObject(jt);
-			String jsonSchemaSource = jsonSchemaFile.getPath();
-			return addSchema(jsonSchema,jsonSchemaSource);
+			return addSchema(jsonSchema,jsonSchemaFile);
 		}
 	}
 	
-	public ValidatedJSONSchema addSchema(JSONObject jsonSchema,String jsonSchemaSource)
+	public ValidatedJSONSchema addSchema(JSONObject jsonSchema,File jsonSchemaFile)
 		throws ValidationException, SchemaNoIdException, SchemaNoSchemaException, SchemaRepeatedIdException, UnsupportedSchemaException
 	{
-		ValidatedJSONSchema bSchemaDoc = new ValidatedJSONSchema(jsonSchema,this,jsonSchemaSource);
+		return addSchema(jsonSchema,jsonSchemaFile.getPath(),emptyMap());
+	}
+	
+	public ValidatedJSONSchema addSchema(JSONObject jsonSchema,File jsonSchemaFile,Map<URI,JSONObject> cachedSchemas)
+		throws ValidationException, SchemaNoIdException, SchemaNoSchemaException, SchemaRepeatedIdException, UnsupportedSchemaException
+	{
+		return addSchema(jsonSchema,jsonSchemaFile.getPath(),cachedSchemas);
+	}
+	
+	public ValidatedJSONSchema addSchema(JSONObject jsonSchema,String jsonSchemaSource,Map<URI,JSONObject> cachedSchemas)
+		throws ValidationException, SchemaNoIdException, SchemaNoSchemaException, SchemaRepeatedIdException, UnsupportedSchemaException
+	{
+		ValidatedJSONSchema bSchemaDoc = new ValidatedJSONSchema(jsonSchema,this,jsonSchemaSource,cachedSchemas);
 		
 		// If we are here, then there is no error
 		schemaHash.put(bSchemaDoc.getId(),bSchemaDoc);

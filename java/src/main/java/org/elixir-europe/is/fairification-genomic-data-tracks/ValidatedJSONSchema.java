@@ -1,10 +1,13 @@
 package org.elixir_europe.is.fairification_genomic_data_tracks;
 
+import java.io.File;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import static java.util.Collections.emptyMap;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -217,27 +220,33 @@ public class ValidatedJSONSchema {
 	public ValidatedJSONSchema(JSONObject jsonSchema)
 		throws ValidationException, SchemaNoIdException, SchemaNoSchemaException, SchemaRepeatedIdException, UnsupportedSchemaException
 	{
-		this(jsonSchema,null,"<unknown>");
+		this(jsonSchema,null,"<unknown>",emptyMap());
+	}
+	
+	public ValidatedJSONSchema(JSONObject jsonSchema,File jsonSchemaFile)
+		throws ValidationException, SchemaNoIdException, SchemaNoSchemaException, SchemaRepeatedIdException, UnsupportedSchemaException
+	{
+		this(jsonSchema,null,jsonSchemaFile.getPath(),emptyMap());
 	}
 	
 	public ValidatedJSONSchema(JSONObject jsonSchema,String jsonSchemaSource)
 		throws ValidationException, SchemaNoIdException, SchemaNoSchemaException, SchemaRepeatedIdException, UnsupportedSchemaException
 	{
-		this(jsonSchema,null,jsonSchemaSource);
+		this(jsonSchema,null,jsonSchemaSource,emptyMap());
 	}
 	
 	public ValidatedJSONSchema(JSONObject jsonSchema,Validator p_schemaHash)
 		throws ValidationException, SchemaNoIdException, SchemaNoSchemaException, SchemaRepeatedIdException, UnsupportedSchemaException
 	{
-		this(jsonSchema,p_schemaHash,"<unknown>");
+		this(jsonSchema,p_schemaHash,"<unknown>",emptyMap());
 	}
 	
-	public ValidatedJSONSchema(JSONObject jsonSchema,Validator p_schemaHash,String jsonSchemaSource)
+	public ValidatedJSONSchema(JSONObject jsonSchema,Validator p_schemaHash,String jsonSchemaSource,Map<URI,JSONObject> cachedSchemas)
 		throws ValidationException, SchemaNoIdException, SchemaNoSchemaException, SchemaRepeatedIdException, UnsupportedSchemaException
 	{
 		this.jsonSchema = jsonSchema;
 		this.jsonSchemaSource = jsonSchemaSource;
-		this.warnings = new ArrayList<String>();
+		this.warnings = new ArrayList<>();
 		
 		Schema validator = null;
 		if(jsonSchema.has(SCHEMA_KEY)) {
@@ -306,8 +315,13 @@ public class ValidatedJSONSchema {
 			 }
 		}
 		
-		// And at last
-		SchemaLoader jsonSchemaValLoader = SchemaLoader.builder()
+		// And at last, the cache of schemas is told to the builder
+		SchemaLoader.SchemaLoaderBuilder jsonSchemaValLoaderBuilder = SchemaLoader.builder();
+		for(Map.Entry<URI,JSONObject> cachedSchema: cachedSchemas.entrySet()) {
+			jsonSchemaValLoaderBuilder.registerSchemaByURI(cachedSchema.getKey(),cachedSchema.getValue());
+		}
+		
+		SchemaLoader jsonSchemaValLoader = jsonSchemaValLoaderBuilder
 			.schemaJson(jsonSchema)
 			.addFormatValidator(CurieFormat.DEFAULT_FORMAT_NAME, new CurieFormat())
 			.addFormatValidator(TermFormat.DEFAULT_FORMAT_NAME, new TermFormat())

@@ -22,6 +22,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import java.net.URISyntaxException;
+
 import org.everit.json.schema.Schema;
 import org.everit.json.schema.ValidationException;
 import org.everit.json.schema.loader.SchemaLoader;
@@ -36,19 +38,38 @@ import org.json.JSONTokener;
  */
 public class FairGTrackValidatorCli
 {
+	final class CachedJSONSchema {
+		public final String id;
+		public final JSONObject jsonSchema;
+		public final File jsonSchemaFile;
+		
+		public CachedJSONSchema(String id,JSONObject jsonSchema,File jsonSchemaFile) {
+			this.id = id;
+			this.jsonSchema = jsonSchema;
+			this.jsonSchemaFile = jsonSchemaFile;
+		}
+	}
+	
 	protected Validator p_schemaHash;
+	protected Map<String,CachedJSONSchema> uriLoad;
 	
 	public FairGTrackValidatorCli(List<File> jsonSchemaFiles) {
 		p_schemaHash = new Validator();
 		
+		uriLoad = cacheJSONSchemas(jsonSchemaFiles);
+		loadJSONSchemas();
+	}
+	
+	protected Map<String,CachedJSONSchema> cacheJSONSchemas(List<File> jsonSchemaFiles) {
 		// Schema validation stats
 		int numDirOK = 0;
 		int numDirFail = 0;
+		HashMap<String,CachedJSONSchema> uriLoad = new HashMap<>();
 		int numFileOK = 0;
 		int numFileIgnore = 0;
 		int numFileFail = 0;
 		
-		System.out.println("PASS 0.a: JSON schema loading and validation");
+		System.out.println("PASS 0.0: JSON schema cache linking");
 		System.out.flush();
 		
 		// It is done so, in order to avoid the ConcurrentModificationException
@@ -73,38 +94,34 @@ public class FairGTrackValidatorCli
 					numDirFail++;
 				}
 			} else {
-				try {
-					System.out.printf("* Loading schema %s\n",jsonSchemaFile.getPath());
-					System.out.flush();
-					ValidatedJSONSchema bSchemaDoc = p_schemaHash.addSchema(jsonSchemaFile);
-					System.out.printf("\t- Validated %s\n",bSchemaDoc.getId().toString());
-					System.out.flush();
-					for(String warning: bSchemaDoc.getWarnings()) {
-						System.err.println("\tWARNING: "+warning);
+				System.out.printf("* Analyzing schema %s\n",jsonSchemaFile.getPath());
+				System.out.flush();
+
+				try(
+					InputStream jsonStream = new BufferedInputStream(new FileInputStream(jsonSchemaFile),1024*1024);
+					Reader jsonReader = new InputStreamReader(jsonStream,"UTF-8");
+				) {
+					JSONTokener jt = new JSONTokener(jsonReader);
+					JSONObject jsonSchema = new JSONObject(jt);
+					
+					String idKey = jsonSchema.has(ValidatedJSONSchema.NEW_ID_KEY) ? ValidatedJSONSchema.NEW_ID_KEY : ValidatedJSONSchema.ID_KEY;
+					
+					String jsonSchemaURI = jsonSchema.optString(idKey);
+					if(jsonSchemaURI != null) {
+						if(uriLoad.containsKey(jsonSchemaURI)) {
+							numFileIgnore++;
+							System.out.println("\t- Skipped due duplicate URI " + jsonSchemaURI);
+						} else {
+							numFileOK++;
+							uriLoad.put(jsonSchemaURI,new CachedJSONSchema(jsonSchemaURI,jsonSchema,jsonSchemaFile));
+							System.out.println("\t- Cached URI "+jsonSchemaURI);
+						}
+						System.out.flush();
+					} else {
+						System.err.printf("\tIGNORE: %s does not have the mandatory '$id' or 'id' attribute\n",jsonSchemaFile.getPath());
 						System.err.flush();
+						numFileIgnore++;
 					}
-					numFileOK++;
-				} catch(ValidationException ve) {
-					System.err.println("\t- ERRORS:");
-					ve.getCausingExceptions().stream().forEach(se -> System.err.printf("\t\tPath: %s . Message: %s\n",se.getPointerToViolation(),se.getMessage()));
-					System.err.flush();
-					numFileFail++;
-				} catch(SchemaRepeatedIdException srie) {
-					System.err.println("\tERROR: "+srie.getMessage());
-					System.err.flush();
-					numFileFail++;
-				} catch(SchemaNoIdException snie) {
-					System.err.println("\tIGNORE: "+snie.getMessage());
-					System.err.flush();
-					numFileIgnore++;
-				} catch(SchemaNoSchemaException snse) {
-					System.err.println("\tIGNORE: "+snse.getMessage());
-					System.err.flush();
-					numFileIgnore++;
-				} catch(UnsupportedSchemaException use) {
-					System.err.println("\tIGNORE/FIXME: "+use.getMessage());
-					System.err.flush();
-					numFileIgnore++;
 				} catch(IOException ioe) {
 					System.err.printf("FATAL ERROR: Unable to open schema file %s. Reason: %s\n",jsonSchemaFile.getPath(),ioe.getMessage());
 					System.err.flush();
@@ -112,10 +129,75 @@ public class FairGTrackValidatorCli
 				}
 			}
 		}
+		
+		System.out.printf("\nSCHEMA LINKING STATS: linked %d schemas from %d directories, %d schemas to be loaded, ignored %d files, failed %d schemas and %d directories\n",numFileOK,numDirOK,uriLoad.size(),numFileIgnore,numFileFail,numDirFail);
+		System.out.flush();
+		
+		return uriLoad;
+	}
+	
+	protected void loadJSONSchemas() {
+		// Schema validation stats
+		int numFileOK = 0;
+		int numFileIgnore = 0;
+		int numFileFail = 0;
+		
+		System.out.println("\nPASS 0.a: JSON schema loading and validation");
+		System.out.flush();
+		
+		// Generate the map of cached schemas
+		Map<URI,JSONObject> cachedSchemas = new HashMap<>();
+		for(CachedJSONSchema cachedJ: uriLoad.values()) {
+			try {
+				cachedSchemas.put(new URI(cachedJ.id),cachedJ.jsonSchema);
+			} catch(URISyntaxException use) {
+				System.err.println("ERROR: Cached JSON Schema "+cachedJ.jsonSchemaFile.getPath()+" has as id an invalid URI: "+cachedJ.id);
+				System.err.flush();
+			}
+		}
+		
+		// It is done so, in order to avoid the ConcurrentModificationException
+		for(CachedJSONSchema cachedJ: uriLoad.values()) {
+			File jsonSchemaFile = cachedJ.jsonSchemaFile;
+			try {
+				System.out.printf("* Loading schema %s\n",jsonSchemaFile.getPath());
+				System.out.flush();
+				ValidatedJSONSchema bSchemaDoc = p_schemaHash.addSchema(cachedJ.jsonSchema,jsonSchemaFile,cachedSchemas);
+				System.out.printf("\t- Validated %s\n",bSchemaDoc.getId().toString());
+				System.out.flush();
+				for(String warning: bSchemaDoc.getWarnings()) {
+					System.err.println("\tWARNING: "+warning);
+					System.err.flush();
+				}
+				numFileOK++;
+			} catch(ValidationException ve) {
+				System.err.println("\t- ERRORS:");
+				ve.getCausingExceptions().stream().forEach(se -> System.err.printf("\t\tPath: %s . Message: %s\n",se.getPointerToViolation(),se.getMessage()));
+				System.err.flush();
+				numFileFail++;
+			} catch(SchemaRepeatedIdException srie) {
+				System.err.println("\tERROR: "+srie.getMessage());
+				System.err.flush();
+				numFileFail++;
+			} catch(SchemaNoIdException snie) {
+				System.err.println("\tIGNORE: "+snie.getMessage());
+				System.err.flush();
+				numFileIgnore++;
+			} catch(SchemaNoSchemaException snse) {
+				System.err.println("\tIGNORE: "+snse.getMessage());
+				System.err.flush();
+				numFileIgnore++;
+			} catch(UnsupportedSchemaException use) {
+				System.err.println("\tIGNORE/FIXME: "+use.getMessage());
+				System.err.flush();
+				numFileIgnore++;
+			}
+		}
 
-		System.out.printf("\nSCHEMA VALIDATION STATS: loaded %d schemas from %d directories, ignored %d schemas, failed %d schemas and %d directories\n",numFileOK,numDirOK,numFileIgnore,numFileFail,numDirFail);
+		System.out.printf("\nSCHEMA VALIDATION STATS: loaded %d schemas, ignored %d schemas, failed %d schemas\n",numFileOK,numFileIgnore,numFileFail);
 		
 		System.out.println("\nPASS 0.b: JSON schema set consistency checks");
+		System.out.flush();
 		
 		// Now, we check whether the declared foreign keys are pointing to loaded JSON schemas
 		int numSchemaConsistent = 0;
