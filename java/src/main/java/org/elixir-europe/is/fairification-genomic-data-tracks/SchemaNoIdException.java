@@ -9,6 +9,6 @@ public class SchemaNoIdException
 	
 	@Override
 	public String getMessage() {
-		return String.format("validated, but schema in %s has no id attribute",jsonSchemaSource);
+		return String.format("validated, but schema in %s has neither '@id' nor 'id' attribute",jsonSchemaSource);
 	}
 }
