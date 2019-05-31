@@ -1,13 +1,19 @@
 package org.elixir_europe.is.fairification_genomic_data_tracks;
 
+import java.io.File;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import static java.util.Collections.emptyMap;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import org.elixir_europe.is.fairification_genomic_data_tracks.extensions.CurieFormat;
+import org.elixir_europe.is.fairification_genomic_data_tracks.extensions.TermFormat;
 
 import org.everit.json.schema.Schema;
 import org.everit.json.schema.ValidationException;
@@ -20,6 +26,7 @@ import org.json.JSONTokener;
 public class ValidatedJSONSchema {
 	protected final static String FOREIGN_KEYS_KEY = "foreign_keys";
 	protected final static String ID_KEY = "id";
+	protected final static String NEW_ID_KEY = "$id";
 	protected final static String ITEMS_KEY = "items";
 	protected final static String MEMBERS_KEY = "members";
 	protected final static String PRIMARY_KEY_KEY = "primary_key";
@@ -39,13 +46,43 @@ public class ValidatedJSONSchema {
 	
 	protected Collection<String> warnings;
 	
-	protected static final Schema Draft4Schema = SchemaLoader.load(
-		new JSONObject(
-			new JSONTokener(
-				Schema.class.getResourceAsStream("/org/json-schema/draft-04/schema")
-			)
-		)
-	);
+	protected static final String[] MetaSchemas = {
+		"/org/json-schema/draft-04/schema",
+		"/org/json-schema/draft-06/schema",
+		"/org/json-schema/draft-07/schema"
+	};
+	
+	protected static final Map<String,Schema> ValidatorMapper = createValidatorMapper();
+	
+	private static Map<String,Schema> createValidatorMapper() {
+		Map<String,Schema> validatorMapper = new HashMap<String,Schema>();
+		
+		for(String metaSchemaPath: MetaSchemas) {
+			JSONObject parsedMetaSchema = new JSONObject(
+				new JSONTokener(
+					Schema.class.getResourceAsStream(metaSchemaPath)
+				)
+			);
+			
+			String schemaId = null;
+			if(parsedMetaSchema.has(NEW_ID_KEY)) {
+				schemaId = parsedMetaSchema.getString(NEW_ID_KEY);
+			} else if(parsedMetaSchema.has(ID_KEY)) {
+				schemaId = parsedMetaSchema.getString(ID_KEY);
+			}
+			
+			if(schemaId != null) {
+				// Create the schema, registering the custom formats
+				SchemaLoader schemaLoader = SchemaLoader.builder()
+					.schemaJson(parsedMetaSchema)
+					.build();
+				
+				validatorMapper.put(schemaId,schemaLoader.load().build());
+			}
+		}
+		
+		return validatorMapper;
+	}
 	
 	private static Collection<String> _NewPKhelper(String elem) {
 		Collection<String> newPK = new ArrayList<String>();
@@ -180,39 +217,57 @@ public class ValidatedJSONSchema {
 	}
 	
 	public ValidatedJSONSchema(JSONObject jsonSchema)
-		throws ValidationException, SchemaNoIdException, SchemaRepeatedIdException
+		throws ValidationException, SchemaNoIdException, SchemaNoSchemaException, SchemaRepeatedIdException, UnsupportedSchemaException
 	{
-		this(jsonSchema,null,"<unknown>");
+		this(jsonSchema,null,"<unknown>",emptyMap());
+	}
+	
+	public ValidatedJSONSchema(JSONObject jsonSchema,File jsonSchemaFile)
+		throws ValidationException, SchemaNoIdException, SchemaNoSchemaException, SchemaRepeatedIdException, UnsupportedSchemaException
+	{
+		this(jsonSchema,null,jsonSchemaFile.getPath(),emptyMap());
 	}
 	
 	public ValidatedJSONSchema(JSONObject jsonSchema,String jsonSchemaSource)
-		throws ValidationException, SchemaNoIdException, SchemaRepeatedIdException
+		throws ValidationException, SchemaNoIdException, SchemaNoSchemaException, SchemaRepeatedIdException, UnsupportedSchemaException
 	{
-		this(jsonSchema,null,jsonSchemaSource);
+		this(jsonSchema,null,jsonSchemaSource,emptyMap());
 	}
 	
 	public ValidatedJSONSchema(JSONObject jsonSchema,Validator p_schemaHash)
-		throws ValidationException, SchemaNoIdException, SchemaRepeatedIdException
+		throws ValidationException, SchemaNoIdException, SchemaNoSchemaException, SchemaRepeatedIdException, UnsupportedSchemaException
 	{
-		this(jsonSchema,p_schemaHash,"<unknown>");
+		this(jsonSchema,p_schemaHash,"<unknown>",emptyMap());
 	}
 	
-	public ValidatedJSONSchema(JSONObject jsonSchema,Validator p_schemaHash,String jsonSchemaSource)
-		throws ValidationException, SchemaNoIdException, SchemaRepeatedIdException
+	public ValidatedJSONSchema(JSONObject jsonSchema,Validator p_schemaHash,String jsonSchemaSource,Map<URI,JSONObject> cachedSchemas)
+		throws ValidationException, SchemaNoIdException, SchemaNoSchemaException, SchemaRepeatedIdException, UnsupportedSchemaException
 	{
 		this.jsonSchema = jsonSchema;
 		this.jsonSchemaSource = jsonSchemaSource;
-		this.warnings = new ArrayList<String>();
+		this.warnings = new ArrayList<>();
 		
-		Draft4Schema.validate(jsonSchema);
+		Schema validator = null;
+		if(jsonSchema.has(ValidableDoc.SCHEMA_KEY)) {
+			String schemaId = jsonSchema.getString(ValidableDoc.SCHEMA_KEY);
+			if(ValidatorMapper.containsKey(schemaId)) {
+				validator = ValidatorMapper.get(schemaId);
+			} else {
+				throw new UnsupportedSchemaException(jsonSchemaSource,schemaId);
+			}
+		} else {
+			throw new SchemaNoSchemaException(jsonSchemaSource);
+		}
+		
+		validator.validate(jsonSchema);
 		
 		// # Getting the JSON Pointer object instance of the augmented schema
 		// # my $jsonSchemaP = $v->schema($jsonSchema)->schema;
 		// # This step is done, so we fetch a complete schema
 		// # $jsonSchema = $jsonSchemaP->data;
-		if(jsonSchema.has(ID_KEY)) {
+		if(jsonSchema.has(ID_KEY) || jsonSchema.has(NEW_ID_KEY)) {
 			try{
-				jsonSchemaURI = new URI(jsonSchema.getString(ID_KEY));
+				jsonSchemaURI = new URI(jsonSchema.getString(jsonSchema.has(ID_KEY) ? ID_KEY : NEW_ID_KEY));
 				if(p_schemaHash!=null && p_schemaHash.containsSchema(jsonSchemaURI)) {
 					// Throw exception due repeated schema
 					throw new SchemaRepeatedIdException(jsonSchemaSource,p_schemaHash.getSchema(jsonSchemaURI).getJsonSchemaSource());
@@ -258,8 +313,20 @@ public class ValidatedJSONSchema {
 				 jsonSchema.remove("dependencies");
 			 }
 		}
-		// And at last
-		jsonSchemaVal = SchemaLoader.load(jsonSchema);
+		
+		// And at last, the cache of schemas is told to the builder
+		SchemaLoader.SchemaLoaderBuilder jsonSchemaValLoaderBuilder = SchemaLoader.builder();
+		for(Map.Entry<URI,JSONObject> cachedSchema: cachedSchemas.entrySet()) {
+			jsonSchemaValLoaderBuilder.registerSchemaByURI(cachedSchema.getKey(),cachedSchema.getValue());
+		}
+		
+		SchemaLoader jsonSchemaValLoader = jsonSchemaValLoaderBuilder
+			.schemaJson(jsonSchema)
+			.addFormatValidator(CurieFormat.DEFAULT_FORMAT_NAME, new CurieFormat())
+			.addFormatValidator(TermFormat.DEFAULT_FORMAT_NAME, new TermFormat())
+			.build();
+		
+		jsonSchemaVal = jsonSchemaValLoader.load().build();
 	}
 	
 	public Collection<String> getWarnings() {

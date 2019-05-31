@@ -1,12 +1,11 @@
 package org.elixir_europe.is.fairification_genomic_data_tracks;
 
 public class SchemaRepeatedIdException
-	extends Exception
+	extends SchemaNoIdException
 {
-	protected String jsonSchemaSource;
 	protected String repeatedJsonSchemaSource;
 	public SchemaRepeatedIdException(String jsonSchemaSource,String repeatedJsonSchemaSource) {
-		this.jsonSchemaSource = jsonSchemaSource;
+		super(jsonSchemaSource);
 		this.repeatedJsonSchemaSource = repeatedJsonSchemaSource;
 	}
 	

@@ -22,7 +22,13 @@ import org.json.JSONObject;
 import org.json.JSONTokener;
 
 public class ValidableDoc {
-	protected final static String SCHEMA_KEY = "_schema";
+	protected final static String PARENT_SCHEMA_KEY = "fair_tracks";
+	protected final static String SCHEMA_KEY = "$schema";
+	protected final static String[] ALT_SCHEMA_KEYS = {
+		"@schema",
+		"_schema",
+		SCHEMA_KEY
+	};
 	
 	protected static final Pattern jStepPat = Pattern.compile("^([^\\[]+)\\[(0|[1-9][0-9]+)?\\]$");
 	
@@ -39,9 +45,20 @@ public class ValidableDoc {
 		this.jsonSource = jsonSource;
 		
 		jsonSchemaId = null;
-		if(jsonDoc.has(SCHEMA_KEY)) {
+		JSONObject parent = jsonDoc.optJSONObject(PARENT_SCHEMA_KEY);
+		if(parent == null) {
+			parent = jsonDoc;
+		}
+		String jsonSchemaIdStr = null;
+		for(final String altSchemaKey: ALT_SCHEMA_KEYS) {
+			jsonSchemaIdStr = parent.optString(altSchemaKey,null);
+			if(jsonSchemaIdStr!=null) {
+				break;
+			}
+		}
+		if(jsonSchemaIdStr != null) {
 			try{
-				jsonSchemaId = new URI(jsonDoc.getString(SCHEMA_KEY));
+				jsonSchemaId = new URI(jsonSchemaIdStr);
 			} catch(URISyntaxException use) {
 				// IgnoreIt(R)
 			}
