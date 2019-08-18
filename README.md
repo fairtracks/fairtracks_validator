@@ -1,8 +1,10 @@
-# FAIRification Genomic Data Tracks JSON Schema validation
+# FAIRification of Genomic Data Tracks JSON Schema validation
 
-The sample validation and consistency check tools are hosted in this directory. They were designed to work on complete sets of JSON files, spread over several directories.
+**NOTE:** _This repo was originally hosted at [FAIRification of Genomic Data Tracks Standards](//github.com/fairtracks/fairtracks_standard) repository, where the defined JSON Schemas are maintained_
 
-These tools (currently, only python) implement next extensions:
+The validation and consistency check tools are hosted in this directory. They were designed to work on complete sets of JSON files, spread over several directories.
+
+These tools (currently, both [Python](python) and [Java](java)) implement next extensions:
 
 * Format `curie`: This format represents a CURIE, whose namespace should be registered in [identifiers.org](https://identifiers.org/) (a copy of the registry is downloaded and cached). When this format is used, next attributes are used to manage its behavior:
   
@@ -31,7 +33,10 @@ These tools (currently, only python) implement next extensions:
   + `ancestors`: This attribute can be either a single IRI or an array of them. The terms declared here must exist in at least one ontology, and the values to validate must have among its ancestors at least one of these terms.
 
 
-You can use any of the reference implementations, [Python 2.x / 3.x](python) (finished) and [Java 8+](java) (in development), as any of them should do the same validations and consistency checks than the others.
+You can use any of the reference implementations, [Python 2.x / 3.x](python) and [Java 8+](java), as any of them should do the same validations and consistency checks than the others.
 
 You can find in [test-data](test-data) a JSON Schema using these formats, and also two sample JSONs, one with errors, and another one which validates against the schema.
 
+## Original work
+
+The code currently in this repository started as a fork from code currently available at [extended JSON Schema validators](//github.com/inab/extended-json-schema-validators) repository.
