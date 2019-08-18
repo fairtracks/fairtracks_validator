@@ -8,7 +8,7 @@
 	<packaging>jar</packaging>
 	<version>0.3-SNAPSHOT</version>
 	<name>fair-gtrack-validator</name>
-	<url>https://github.com/fairtracks/fairtracks_standard</url>
+	<url>https://github.com/fairtracks/fairtracks_validator</url>
 	
 	<scm>
 		<connection>scm:git:https://github.com/fairtracks/json-schema.git</connection>
