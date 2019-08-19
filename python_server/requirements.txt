@@ -1,0 +1,6 @@
+git+https://github.com/fairtracks/fairtracks_validator@871282cbf2b1ecb287c7e4a7c5b1a0f85a8a2a51#egg=fairtracks_validator&subdirectory=python
+flask
+flask-cors
+flask-restplus
+flask-compress
+flup
