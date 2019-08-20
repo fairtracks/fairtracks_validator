@@ -22,6 +22,16 @@ if [ ! -d .pyRESTenv/lib/python3.5/site-packages/flask_restplus/static ] ; then
 fi
 ```
 
+## Setup
+
+File `fairtracks_validator.fcgi.py.yaml` must contain the list of JSON Schemas to be validated by this server. The template file `[fairtracks_validator.fcgi.py.yaml](fairtracks_validator.fcgi.py.yaml)` can be used as the starting point. If there is no file when this server is run once, the template file is tried to be copied to the configuration one.
+
+The format of the configuration file is simple, as only  two keys are acknowledged by the validation server:
+
+* _`schemas`_, which is a list of JSON Schema URLs to be fetched.
+
+* _`cacheDir`_, which is a directory where the schemas are cached.
+
 ## API integration into Apache
 
 This API can be integrated into an Apache instance. The instance must have the module [FCGID](https://httpd.apache.org/mod_fcgid/) installed (package `libapache2-mod-fcgid` in Ubuntu).

@@ -20,6 +20,20 @@ if [ ! -d "$PYBASEDIR" ] ; then
 	pip install -r "${BASEDIR}"/requirements.txt -c "${BASEDIR}"/constraints.txt
 fi
 
+# Is there a configuration file?
+pyfile="${BASEDIR}/$(basename "$0")".py
+configfile="${pyfile}.yaml"
+template_config="${configfile}.template"
+
+if [ ! -f "$configfile" ] ; then
+	# Try initializing it with the default values
+	cp -dft "${template_config}" "$configfile"
+	if [ ! -f "$configfile" ] ; then
+		echo "NO CONFIG FILE $configfile" 1>&2
+		exit 1
+	fi
+fi
+
 if [ -d "$PYBASEDIR" ] ; then
 	source "${PYBASEDIR}/bin/activate"
 	exec python "${BASEDIR}/$(basename "$0")".py "$@"
