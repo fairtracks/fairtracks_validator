@@ -16,8 +16,13 @@ class FTVResource(Resource):
 
 NS = Namespace('ftv','FAIRtracks REST validator')
 
+config_model = NS.model('FTVConfig', {
+	'schemas': fields.List(fields.String, required=True, description='The schema URLs in the configuration file')
+})
+
 ftv_info_model = NS.model('FTVInfo', {
 	'version': fields.String(required=True, description = 'API Version'),
+	'config': fields.Nested(config_model, required=True, description = 'Public configuration bits')
 })
 
 ########################

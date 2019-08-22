@@ -76,6 +76,7 @@ class FAIRTracksValidator(object):
 		
 		# 3. Pre-populating the list
 		initial_source_urls = local_config.get('schemas',[])
+		self.initial_source_urls = initial_source_urls
 		if len(initial_source_urls) > 0:
 			schemas.append({'source_urls': initial_source_urls})
 		
@@ -361,7 +362,7 @@ class FAIRTracksValidator(object):
 		self.api = api
 	
 	def ftv_info(self):
-		return { 'version': self.APIVersion }
+		return { 'version': self.APIVersion, 'config': {'schemas': self.initial_source_urls } }
 	
 	def list_schemas(self):
 		import pprint
