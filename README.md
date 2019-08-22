@@ -32,8 +32,9 @@ These tools (currently, both [Python](python) and [Java](java)) implement next e
   
   + `ancestors`: This attribute can be either a single IRI or an array of them. The terms declared here must exist in at least one ontology, and the values to validate must have among its ancestors at least one of these terms.
 
-
 You can use any of the reference implementations, [Python 2.x / 3.x](python) and [Java 8+](java), as any of them should do the same validations and consistency checks than the others.
+
+There is also a [Python validation server](python_server), which uses [Python extendend validator](Python). You can find more documentation in that subdirectory.
 
 You can find in [test-data](test-data) a JSON Schema using these formats, and also two sample JSONs, one with errors, and another one which validates against the schema.
 
