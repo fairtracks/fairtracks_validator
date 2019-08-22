@@ -31,13 +31,13 @@ schema_error_model = SCHEMAS_NS.model('SchemaError', {
 	'*': wci
 })
 
-# fields.Url is for self generated URIs
+# Lesson learned: fields.Url is for self generated URIs
 schema_info_model = SCHEMAS_NS.model('SchemaInfo', {
 	'source_urls': fields.List(fields.String,required=True, description = 'URL location of the JSON Schema'),
 	'fetched_at': fields.DateTime,
 	'errors': fields.List(fields.Nested(schema_error_model),required=False, description = 'The list of detected errors when the JSON Schema was initially processed'),
 	'schema_hash': fields.String(required=False, description = 'The SHA1 hash of the normalized JSON Schema, in hexadecima representation'),
-	'schema_id': fields.Url(required=False, absolute=True, description = 'The id of the schema'),
+	'schema_id': fields.String(required=False, description = 'The id of the schema'),
 })
 
 #schema_info_model_schema = SCHEMAS_NS.schema_model('SchemaInfo', {
