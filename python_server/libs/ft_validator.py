@@ -31,7 +31,12 @@ class FAIRTracksValidator(object):
 		self.max_retries = self.DEFAULT_MAX_RETRIES
 		
 		# Let's initialize the whole system
+		self.fgv = FairGTracksValidator()
 		
+		self.init_cache(local_config)
+		self.validateCachedJSONSchemas()
+	
+	def init_cache(self,local_config):
 		# 1. Initialize the cache directory
 		self.cacheDir = local_config.get('cacheDir')
 		
@@ -190,19 +195,19 @@ class FAIRTracksValidator(object):
 							schema_hash = self.GetNormalizedJSONHash(jss)
 							
 							# Is this an schema?
-							if jss.get('$schema') is not None:
-								id_key = '$id'  if '$id' in jss else 'id'
-								schema_id = jss.get(id_key)
-								if schema_id is None:
-									errors.append({
-										'reason': 'no_id',
-										'description': "JSON Schema attribute '$id' or 'id' are missing"
-									})
-							else:
-								errors.append({
-									'reason': 'no_schema',
-									'description': "JSON Schema attribute '$schema' is missing"
-								})
+							#if jss.get('$schema') is not None:
+							#	id_key = '$id'  if '$id' in jss else 'id'
+							#	schema_id = jss.get(id_key)
+							#	if schema_id is None:
+							#		errors.append({
+							#			'reason': 'no_id',
+							#			'description': "JSON Schema attribute '$id' or 'id' are missing"
+							#		})
+							#else:
+							#	errors.append({
+							#		'reason': 'no_schema',
+							#		'description': "JSON Schema attribute '$schema' is missing"
+							#	})
 							
 							# Only here it is saved to the caching dir
 							jsc_path = schema_hash
@@ -284,6 +289,11 @@ class FAIRTracksValidator(object):
 		
 		with open(manifest_path,'w',encoding='utf-8') as mh:
 			json.dump(self.manifest, mh)
+	
+	def validateCachedJSONSchemas(self):
+		cached_schemas = map(lambda curated_schema: {'schema': curated_schema['source'], 'file': curated_schema['info']['source_urls'][0], 'errors': curated_schema['info'].setdefault('errors',[])}, self._schemas.values())
+		self.fgv.loadJSONSchemas(*cached_schemas)
+		
 	
 	@classmethod
 	def GetNormalizedJSONHash(cls,json_data):
@@ -373,8 +383,10 @@ class FAIRTracksValidator(object):
 		
 		return _schema_source
 	
-	def validate(self,json_data):
-		# TODO
-		pass
+	def validate(self,*json_data):
+		cached_jsons = list(map(lambda loaded_json: {'json': loaded_json[1], 'file': '(inline'+str(loaded_json[0])+')', 'errors': []}, enumerate(json_data)))
+		self.fgv.jsonValidate(*cached_jsons)
+		
+		return list(map(lambda jsonObj: {'validated': len(jsonObj['errors'])==0,'errors':jsonObj['errors']}, cached_jsons))
 	
 		

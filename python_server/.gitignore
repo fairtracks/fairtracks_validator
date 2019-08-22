@@ -1,2 +1,3 @@
 .py*env/
 __pycache__
+*.yaml

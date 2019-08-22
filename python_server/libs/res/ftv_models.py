@@ -60,7 +60,7 @@ validation_input_model = VALIDATE_NS.model('ValidationInput', {
 	'*': wcv
 })
 
-wcve = fields.Wildcard(fields.Raw)
 validation_model = VALIDATE_NS.model('Validation', {
+	'validated': fields.Boolean(required=True, description = "Validation result"),
 	'errors': fields.List(fields.Nested(schema_error_model),required=False, description = 'The list of detected errors when the JSON is processed'),
 })
