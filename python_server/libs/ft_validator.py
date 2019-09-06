@@ -365,8 +365,6 @@ class FAIRTracksValidator(object):
 		return { 'version': self.APIVersion, 'config': {'schemas': self.initial_source_urls } }
 	
 	def list_schemas(self):
-		import pprint
-		pprint.pprint(self.manifest['schemas'],stream=sys.stderr)
 		return self.manifest['schemas']
 	
 	def get_schema_info(self,schema_hash):
