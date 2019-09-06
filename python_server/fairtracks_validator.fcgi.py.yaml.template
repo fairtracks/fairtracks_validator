@@ -1,6 +1,9 @@
 # This key indicates a directory where the JSON Schemas are cached
 cacheDir: "/tmp/fairtracks_validator_cache"
 
+# This key is the port used when the server is run in standalone production mode
+port: 5000
+
 # This keys hold the list of schemas to be mirrored and validated
 schemas:
   - https://raw.githubusercontent.com/fairtracks/fairtracks_standard/master/json/schema/fairtracks.schema.json

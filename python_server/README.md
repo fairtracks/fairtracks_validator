@@ -1,6 +1,6 @@
 # FAIR Tracks Python Server JSON Schema Validator
 
-So, this validation server uses the [Python extended validator](../python), also available in this repository.
+FAIR Tracks validation server uses the [Python extended validator](../python), also available in this repository.
 
 The installation and setup instructions of this validation server are in [INSTALL.md](INSTALL.md) .
 

@@ -6,8 +6,6 @@ import sys, os
 
 import libs.app
 
-from flup.server.fcgi import WSGIServer
-
 import yaml
 # We have preference for the C based loader and dumper, but the code
 # should fallback to default implementations when C ones are not present
@@ -32,4 +30,22 @@ with open(config_file,"r",encoding="utf-8") as cf:
 app = libs.app.init_validator_app(local_config)
 
 if __name__ == '__main__':
-	WSGIServer(app).run()
+	if len(sys.argv) > 1:
+		host = local_config.get('host',"0.0.0.0")
+		port = local_config.get('port',5000)
+		debug = sys.argv[1] != 'standalone'
+		if debug:
+			# Let's suppose it's a numerical port
+			try:
+				port = int(sys.argv[1])
+			except ValueError:
+				pass
+			
+			# Debug mode should not be tied to any interface
+			host = "127.0.0.1"
+		
+		app.run(debug=debug, port=port, host=host)
+	else:
+		from flup.server.fcgi import WSGIServer
+
+		WSGIServer(app).run()
