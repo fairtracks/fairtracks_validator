@@ -134,11 +134,11 @@ class FAIRTracksValidator(object):
 								
 								if schema_id is not None:
 									curated_schema_info['schema_id'] = schema_id
-								elif len(errors) == 0:
-									errors.append({
-										'reason': 'no_id',
-										'description': "The JSON does not have either an 'id' or '$id'"
-									})
+								#elif len(errors) == 0:
+								#	errors.append({
+								#		'reason': 'no_schema_id',
+								#		'description': "The JSON does not have either an 'id' or '$id'"
+								#	})
 								
 								if len(errors) > 0:
 									curated_schema_info['errors'] = errors
