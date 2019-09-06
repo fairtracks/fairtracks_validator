@@ -27,7 +27,7 @@ template_config="${configfile}.template"
 
 if [ ! -f "$configfile" ] ; then
 	# Try initializing it with the default values
-	cp -dft "${template_config}" "$configfile"
+	cp -dfT "${template_config}" "$configfile"
 	if [ ! -f "$configfile" ] ; then
 		echo "NO CONFIG FILE $configfile" 1>&2
 		exit 1
