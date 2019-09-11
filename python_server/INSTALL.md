@@ -104,7 +104,7 @@ sudo service apache2 enable
 This repository contains a [Dockerfile](Dockerfile) which can be used to create a docker image of the server.
 
 ```bash
-docker build fairtracks/validation_server .
+docker build -t fairtracks/validation_server .
 ```
 
 Once the image is built, the image can tested issuing next command:
