@@ -22,7 +22,7 @@ import shutil
 from fairtracks_validator.validator import FairGTracksValidator
 
 class FAIRTracksValidator(object):
-	APIVersion = "0.2.1"
+	APIVersion = "0.2.2"
 	HexSHAPattern = re.compile('^[0-9a-f]{2,}$')
 	CacheManifestFile = 'manifest.json'
 	
