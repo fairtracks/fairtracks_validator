@@ -9,3 +9,36 @@ This server provides next endpoints:
 ![API snapshot](api-snapshot.png "JSON Schema Validator API snapshot")
 
 Once you have properly installed the server, if you run it in debug mode and open http://127.0.0.1:5000/ you will be able to browse and test the FAIR Tracks JSON Schema validator API using the embedded Swagger UI instance. The OpenAPI definition is available at the standard location, http://127.0.0.1:5000/swagger.json
+
+## Usage examples with [cURL](https://curl.haxx.se/)
+
+* Validating a single file:
+
+  ```
+  curl -H 'Content-Type: application/json' -X POST --data-binary @./fairtracks_experiment.example.json http://localhost:5000/validate
+  ```
+
+* Validating several files at once, using [jq](https://github.com/stedolan/jq):
+
+```
+jq -s . fairtracks*.json | curl -H 'Content-Type: application/json' -X POST --data-binary @- http://localhost:5000/validate/array
+```
+
+* Validating several files at once, using `tar`:
+
+```
+tar cf - fairtracks*.json | curl -H 'Content-Type: application/x-tar' -X POST --data-binary @- http://localhost:5000/validate/archive
+```
+
+* Validating several files at once, using `zip`:
+
+```
+zip -9r /tmp/examples.zip examples
+curl -H 'Content-Type: application/zip' -X POST --data-binary @/tmp/examples.zip http://localhost:5000/validate/archive
+```
+
+* Validating several files at once, through multipart/form-data
+
+```
+curl -F file=@fairtracks_experiment.example.json -F file=@fairtracks_track.example.json http://localhost:5000/validate/multipart
+```

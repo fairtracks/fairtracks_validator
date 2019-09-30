@@ -16,10 +16,13 @@ import time
 
 import collections
 
+import atexit
+import shutil
+
 from fairtracks_validator.validator import FairGTracksValidator
 
 class FAIRTracksValidator(object):
-	APIVersion = "0.1.0"
+	APIVersion = "0.2.0"
 	HexSHAPattern = re.compile('^[0-9a-f]{2,}$')
 	CacheManifestFile = 'manifest.json'
 	
@@ -42,6 +45,9 @@ class FAIRTracksValidator(object):
 		
 		if self.cacheDir is None:
 			self.cacheDir = tempfile.mkdtemp(prefix="ftv", suffix="cache")
+			# Remember to remove the directory at exit
+			atexit.register(shutil.rmtree, self.cacheDir, ignore_errors=True)
+			
 		elif not os.path.isdir(self.cacheDir):
 			os.makedirs(self.cacheDir)
 		
@@ -383,9 +389,24 @@ class FAIRTracksValidator(object):
 		return _schema_source
 	
 	def validate(self,*json_data):
-		cached_jsons = list(map(lambda loaded_json: {'json': loaded_json[1], 'file': '(inline'+str(loaded_json[0])+')', 'errors': []}, enumerate(json_data)))
-		self.fgv.jsonValidate(*cached_jsons)
+		cached_jsons = []
+		for i_json, loaded_json_piece in enumerate(json_data):
+			if isinstance(loaded_json_piece,tuple):
+				loaded_json_path , loaded_json = loaded_json_piece
+			else:
+				loaded_json_path = '(inline'+str(i_json)+')'
+				loaded_json = loaded_json_piece
+			
+			if loaded_json is None:
+				cached_jsons.append(loaded_json_path)
+			else:
+				cached_jsons.append({'json': loaded_json, 'file': loaded_json_path, 'errors': []})
 		
-		return list(map(lambda jsonObj: {'validated': len(jsonObj['errors'])==0,'errors':jsonObj['errors']}, cached_jsons))
+		# As the input may be a directory full of JSONs, the output
+		# from this method is the only authorizative source of what
+		# happened inside the validation
+		parsed_jsons = self.fgv.jsonValidate(*cached_jsons)
+		
+		return list(map(lambda jsonObj: {'file': jsonObj['file'], 'validated': len(jsonObj['errors'])==0,'errors':jsonObj['errors']}, parsed_jsons))
 	
 		
