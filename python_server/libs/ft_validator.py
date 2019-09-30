@@ -22,11 +22,12 @@ import shutil
 from fairtracks_validator.validator import FairGTracksValidator
 
 class FAIRTracksValidator(object):
-	APIVersion = "0.2.0"
+	APIVersion = "0.2.1"
 	HexSHAPattern = re.compile('^[0-9a-f]{2,}$')
 	CacheManifestFile = 'manifest.json'
 	
 	DEFAULT_MAX_RETRIES = 5
+	DEFAULT_INVALIDATION_KEY = "InvalidateCachePleasePleasePlease!!!"
 	
 	def __init__(self,local_config,api=None):
 		self.api = api
@@ -34,10 +35,30 @@ class FAIRTracksValidator(object):
 		self.max_retries = self.DEFAULT_MAX_RETRIES
 		
 		# Let's initialize the whole system
+		self.local_config = local_config
+		self.invalidation_key = local_config.get('invalidation_key',self.DEFAULT_INVALIDATION_KEY)
 		self.fgv = FairGTracksValidator()
 		
 		self.init_cache(local_config)
 		self.validateCachedJSONSchemas()
+	
+	def invalidate_cache(self,invalidation_key):
+		# Cleaning up the cached schemas
+		if self.invalidation_key == invalidation_key:
+			if self.cacheDir:
+				for elem in os.scandir(path=self.cacheDir):
+					if elem.is_dir() and not elem.is_symlink():
+						shutil.rmtree(elem.path, ignore_errors=True)
+					else:
+						os.remove(elem.path)
+			
+			self.fgv = FairGTracksValidator()
+			self.init_cache(self.local_config)
+			self.validateCachedJSONSchemas()
+			
+			return True
+		else:
+			return False
 	
 	def init_cache(self,local_config):
 		# 1. Initialize the cache directory

@@ -4,6 +4,9 @@ cacheDir: "/tmp/fairtracks_validator_cache"
 # This key is the port used when the server is run in standalone production mode
 port: 5000
 
+# The value of this key is used to check whether you are allowed to invalidate the cache
+invalidation_key: "InvalidateCachePleasePleasePlease!!!"
+
 # This key is the max size of uploaded files, in MB
 max_file_size: 1024
 
