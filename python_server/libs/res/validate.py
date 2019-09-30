@@ -153,9 +153,6 @@ class MultipartValidation(FTVResource):
 						json_data.append((json_client_file,jsonDoc))
 					except BaseException as e:
 						# Recording the error
-						import pprint as pp
-						pp.pprint(e,stream=sys.stderr)
-						sys.stderr.flush()
 						failed_retval.append({'file': json_client_file, 'validated': False, 'errors':[{'reason': 'fatal', 'description': 'Unable to open/parse JSON file'}]})
 		else:
 			failed_retval.append({'validated': False, 'errors': [{'reason': 'fatal', 'description': 'There were problems processing incoming files from form'}]})
