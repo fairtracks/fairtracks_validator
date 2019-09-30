@@ -4,7 +4,7 @@
 
 import sys, os
 
-from .ftv_models import FTVResource, VALIDATE_NS, validation_input_model, validation_model
+from .ftv_models import FTVResource, VALIDATE_NS, validation_input_model, validation_model, file_upload
 
 from flask import request
 #from flask_accept import accept
@@ -68,7 +68,7 @@ class ArrayValidation(FTVResource):
 
 class ArchiveValidation(FTVResource):
 	'''Validates a JSON against the recorded JSON Schemas'''
-	@VALIDATE_NS.doc('validate_array')
+	@VALIDATE_NS.doc('validate_archive')
 	@VALIDATE_NS.marshal_list_with(validation_model, code=200, description='Success', skip_none=True)
 	@VALIDATE_NS.response(400, 'Some of the validations failed, or the input was corrupted')
 #	@accept('application/zip','application/x-tar','application/x-gtar','application/x-gtar-compressed')
@@ -132,9 +132,10 @@ class ArchiveValidation(FTVResource):
 
 class MultipartValidation(FTVResource):
 	'''Validates a JSON against the recorded JSON Schemas'''
-	@VALIDATE_NS.doc('validate_array')
+	@VALIDATE_NS.doc('validate_multipart')
 	@VALIDATE_NS.marshal_list_with(validation_model, code=200, description='Success', skip_none=True)
 	@VALIDATE_NS.response(400, 'Some of the validations failed')
+	@VALIDATE_NS.expect(file_upload)
 	#@VALIDATE_NS.produces(['image/png'])
 #	@accept('multipart/form-data')
 	def post(self):

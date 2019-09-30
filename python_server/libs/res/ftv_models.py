@@ -72,9 +72,14 @@ validation_model = VALIDATE_NS.model('Validation', {
 	'errors': fields.List(fields.Nested(schema_error_model),required=False, description = 'The list of detected errors when the JSON is processed'),
 })
 
-file_upload = reqparse.RequestParser()
+#file_upload = reqparse.RequestParser()
+file_upload = VALIDATE_NS.parser()
 file_upload.add_argument('file',
+	location='files',
 	type=werkzeug.datastructures.FileStorage,
+	# This line can be uncommented to support multiple uploads when
+	# Swagger-UI fixes this case
+	#action='append',
 	required=True,	
 	help='JSON to be validated'
 )
