@@ -43,6 +43,8 @@ The format of the configuration file is simple, as only  two keys are acknowledg
 
 * _`port`_, optional port where the server is run in either standalone or debug modes. Default is **5000**.
 
+* _`max_file_size`_, optional size, in MB, of the maximum allowed transferred file size. Default is **16**.
+
 * _`schemas`_, which is a list of JSON Schema URLs to be fetched.
 
 * _`cacheDir`_, which is a directory where the schemas are cached.
@@ -93,6 +95,11 @@ sudo service apache2 enable
 	ScriptAlias / "/path/to/fairtracks_validator.fcgi/"
 
 	<Location />
+		# If uncommented, limit request body to 1GB
+		#LimitRequestBody	1073741824
+		# If uncommented, no limits on request body
+		#LimitRequestBody	0
+		
 		SetHandler fcgid-script
 		Options +ExecCGI
 		Require all granted

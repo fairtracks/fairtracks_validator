@@ -4,6 +4,9 @@ cacheDir: "/tmp/fairtracks_validator_cache"
 # This key is the port used when the server is run in standalone production mode
 port: 5000
 
+# This key is the max size of uploaded files, in MB
+max_file_size: 1024
+
 # This keys hold the list of schemas to be mirrored and validated
 schemas:
   - https://raw.githubusercontent.com/fairtracks/fairtracks_standard/master/json/schema/fairtracks.schema.json

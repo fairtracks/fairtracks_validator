@@ -21,6 +21,8 @@ ROUTE_SETS = [
 	VALIDATE_ROUTES
 ]
 
+DEFAULT_MAX_FILE_SIZE_IN_MB = 16
+
 def _register_ft_namespaces(api,res_kwargs):
 	for route_set in ROUTE_SETS:
 		ns = route_set['ns']
@@ -34,6 +36,9 @@ def init_validator_app(local_config):
 	FTValidator = FAIRTracksValidator(local_config)
 	
 	app = Flask('fairtracks_validator')
+	
+	# Setting up the temp upload folder size
+	app.config['MAX_CONTENT_LENGTH'] = round(float(local_config.get('max_file_size',DEFAULT_MAX_FILE_SIZE_IN_MB)) * 1024 * 1024)
 	
 	blueprint = Blueprint('api','fairtracks_validator_api')
 	#blueprint = Blueprint('api','fairtracks_validator_api',static_url_path='/',static_folder='static')
