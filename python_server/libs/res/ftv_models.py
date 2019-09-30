@@ -4,7 +4,8 @@
 
 import sys, os
 
-from flask_restplus import Namespace, Api, Resource, fields
+import werkzeug
+from flask_restplus import Namespace, Api, Resource, fields, reqparse
 
 class FTVResource(Resource):
 	'''This class eases passing the instance of the validator API'''
@@ -66,6 +67,14 @@ validation_input_model = VALIDATE_NS.model('ValidationInput', {
 })
 
 validation_model = VALIDATE_NS.model('Validation', {
+	'file': fields.String(required=True, description = 'The filename of the JSON which was validated, if it was available'),
 	'validated': fields.Boolean(required=True, description = "Validation result"),
 	'errors': fields.List(fields.Nested(schema_error_model),required=False, description = 'The list of detected errors when the JSON is processed'),
 })
+
+file_upload = reqparse.RequestParser()
+file_upload.add_argument('file',
+	type=werkzeug.datastructures.FileStorage,
+	required=True,	
+	help='JSON to be validated'
+)
