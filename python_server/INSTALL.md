@@ -95,6 +95,7 @@ sudo service apache2 enable
 	# This is needed to assure in a cold start of the server that
 	# the ontologies have the chance to be fetched
 	FcgidIOTimeout	240
+	FcgidMaxRequestLen	1073741824
 	ScriptAlias / "/path/to/fairtracks_validator.fcgi/"
 
 	<Location />
