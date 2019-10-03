@@ -143,23 +143,77 @@ class MultipartValidation(FTVResource):
 		retval = []
 		failed_retval = []
 		http_code = 400
+		
 		json_data = []
+		workdir_data = []
 		if request.files is not None:
 			for formfiles in request.files.listvalues():
 				for formfile in formfiles:
-					json_client_file = formfile.filename
-					try:
-						jsonStr = formfile.read().decode("utf-8")
-						jsonDoc = json.loads(jsonStr)
-						json_data.append((json_client_file,jsonDoc))
-					except BaseException as e:
-						# Recording the error
-						failed_retval.append({'file': json_client_file, 'validated': False, 'errors':[{'reason': 'fatal', 'description': 'Unable to open/parse JSON file'}]})
+					client_file = formfile.filename
+					file_content = formfile.read()
+					mime_type = filetype.guess_mime(file_content)
+					
+					if mime_type == 'application/zip':
+						with zipfile.ZipFile(io.BytesIO(file_content)) as inzip:
+							# We need a temporary directory
+							workdir = tempfile.mkdtemp(prefix="ftv", suffix="upz")
+							try:
+								# The internal library knows how to deal with directories
+								inzip.extractall(path=workdir)
+								workdir_data.append((client_file,workdir))
+								json_data.append((workdir,None))
+							except:
+								# Something wrong happened
+								shutil.rmtree(workdir,ignore_errors=True)
+								workdir = None
+								retval.append({'file': client_file,'validated': False, 'errors': [{'reason': 'fatal', 'description': 'There were problems processing incoming zip archive (is it a valid one?)'}]})
+					elif mime_type in ('application/x-tar','application/x-gtar','application/x-gtar-compressed','application/gzip','application/x-bzip2'):
+						with tarfile.open(fileobj=io.BytesIO(file_content)) as intar:
+							# We need a temporary directory
+							workdir = tempfile.mkdtemp(prefix="ftv", suffix="upt")
+							# Beware this operation can be unsafe, as
+							# tarfile library is unsafe. i.e. a tar
+							# could be used as a Trojan horse to
+							# hijack the server
+							try:
+								# The internal library knows how to deal with directories
+								intar.extractall(path=workdir)
+								workdir_data.append((client_file,workdir))
+								json_data.append((workdir,None))
+							except:
+								# Something wrong happened
+								shutil.rmtree(workdir,ignore_errors=True)
+								workdir = None
+								retval.append({'file': client_file,'validated': False, 'errors': [{'reason': 'fatal', 'description': 'There were problems processing incoming tar archive (is it a valid one?)'}]})
+					elif (mime_type == 'application/json')  or ((mime_type is None) and (formfile.mimetype == 'application/json')) :
+						try:
+							jsonStr = file_content.decode("utf-8")
+							jsonDoc = json.loads(jsonStr)
+							json_data.append((client_file,jsonDoc))
+						except BaseException as e:
+							# Recording the error
+							failed_retval.append({'file': client_file, 'validated': False, 'errors':[{'reason': 'fatal', 'description': 'Unable to open/parse JSON file'}]})
+					else:
+						failed_retval.append({'file': client_file, 'validated': False, 'errors':[{'reason': 'fatal', 'description': 'Unable to open/parse file: unrecognized format'}]})
 		else:
 			failed_retval.append({'validated': False, 'errors': [{'reason': 'fatal', 'description': 'There were problems processing incoming files from form'}]})
 		
 		if json_data:
 			retval = self.ftv.validate(*json_data)
+			
+			# Cleaning up resources
+			for _,workdir in workdir_data:
+				shutil.rmtree(workdir,ignore_errors=True)
+			
+			for ele in retval:
+				# As parsed objects could have absolute paths,
+				# We have to trim them
+				for client_archive,workdir in workdir_data:
+					client_path = os.path.relpath(ele['file'],workdir)
+					if client_path != ele['file']:
+						ele['file'] = client_archive + '::' + client_path
+						break
+			
 			if len(failed_retval) > 0:
 				retval.extend(failed_retval)
 			elif all(map(lambda x: x['validated'],retval)):
