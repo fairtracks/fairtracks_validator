@@ -185,7 +185,7 @@ class MultipartValidation(FTVResource):
 								shutil.rmtree(workdir,ignore_errors=True)
 								workdir = None
 								retval.append({'file': client_file,'validated': False, 'errors': [{'reason': 'fatal', 'description': 'There were problems processing incoming tar archive (is it a valid one?)'}]})
-					elif (mime_type == 'application/json')  or ((mime_type is None) and (formfile.mimetype == 'application/json')) :
+					elif (mime_type == 'application/json')  or ((mime_type is None) and (formfile.mimetype in ('application/json','application/octet-stream'))) :
 						try:
 							jsonStr = file_content.decode("utf-8")
 							jsonDoc = json.loads(jsonStr)
@@ -208,9 +208,10 @@ class MultipartValidation(FTVResource):
 			for ele in retval:
 				# As parsed objects could have absolute paths,
 				# We have to trim them
-				for client_archive,workdir in workdir_data:
-					client_path = os.path.relpath(ele['file'],workdir)
-					if client_path != ele['file']:
+				for client_archive, workdir in workdir_data:
+					if ele['file'].startswith(workdir):
+						client_path = os.path.relpath(ele['file'],workdir)
+						
 						ele['file'] = client_archive + '::' + client_path
 						break
 			
