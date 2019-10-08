@@ -29,7 +29,7 @@ class Validation(FTVResource):
 	@VALIDATE_NS.expect(validation_input_model)
 	@VALIDATE_NS.marshal_with(validation_model, code=200, description='Success', skip_none=True)
 	#@VALIDATE_NS.doc(body=validation_input_model)
-	@VALIDATE_NS.response(400, 'Validation failed')
+	@VALIDATE_NS.response(400, 'Input is not JSON content')
 #	@accept('application/json')
 	def post(self):
 		'''It validates the input JSON against the recorded JSON schemas'''
@@ -38,8 +38,10 @@ class Validation(FTVResource):
 		
 		json_data = request.get_json(silent=True)
 		if json_data is not None:
+			# It means the input is JSON (as expected), but nothing more
+			http_code = 200
+			
 			retval = self.ftv.validate(json_data)[0]
-			http_code = 200 if retval['validated'] else 400
 		else:
 			retval = {'validated': False, 'errors': [{'reason': 'fatal', 'description': 'There were problems processing incoming JSON (is it a valid one?)'}]}
 		
@@ -50,7 +52,7 @@ class ArrayValidation(FTVResource):
 	@VALIDATE_NS.doc('validate_array')
 	@VALIDATE_NS.expect([validation_input_model])
 	@VALIDATE_NS.marshal_list_with(validation_model, code=200, description='Success', skip_none=True)
-	@VALIDATE_NS.response(400, 'Some of the validations failed, or the input was not an array')
+	@VALIDATE_NS.response(400, 'Input is not a JSON array content')
 #	@accept('application/json')
 	def post(self):
 		'''It validates the input array of JSONs against the recorded JSON schemas'''
@@ -59,8 +61,9 @@ class ArrayValidation(FTVResource):
 		
 		json_data = request.get_json(silent=True)
 		if isinstance(json_data,list):
+			# It means the input is a JSON array (as expected), but nothing more
+			http_code = 200
 			retval = self.ftv.validate(*json_data)
-			http_code = 200 if all(map(lambda x: x['validated'],retval)) else 400
 		else:
 			retval.append({'validated': False, 'errors': [{'reason': 'fatal', 'description': 'There were problems processing incoming JSON array (is it a valid one?)'}]})
 		
@@ -70,7 +73,7 @@ class ArchiveValidation(FTVResource):
 	'''Validates a JSON against the recorded JSON Schemas'''
 	@VALIDATE_NS.doc('validate_archive')
 	@VALIDATE_NS.marshal_list_with(validation_model, code=200, description='Success', skip_none=True)
-	@VALIDATE_NS.response(400, 'Some of the validations failed, or the input was corrupted')
+	@VALIDATE_NS.response(400, 'The input was not a supported, valid archive')
 #	@accept('application/zip','application/x-tar','application/x-gtar','application/x-gtar-compressed')
 	def post(self):
 		'''It validates the input archive full of JSONs the recorded JSON schemas'''
@@ -110,6 +113,9 @@ class ArchiveValidation(FTVResource):
 					shutil.rmtree(workdir,ignore_errors=True)
 					workdir = None
 					retval.append({'validated': False, 'errors': [{'reason': 'fatal', 'description': 'There were problems processing incoming tar archive (is it a valid one?)'}]})
+		else:
+			retval.append({'validated': False, 'errors': [{'reason': 'fatal', 'description': 'Unsupported or mis-identified input archive (mime {}, size {})'.format(mime_type,len(raw_data))}]})
+			
 			
 		if workdir is not None:
 			retval = self.ftv.validate((workdir,None))
@@ -118,15 +124,13 @@ class ArchiveValidation(FTVResource):
 			# are not needed any more
 			shutil.rmtree(workdir,ignore_errors=True)
 			
+			# If some element had failures, then the
+			# returned code is still 200
 			http_code = 200
 			for ele in retval:
 				# As parsed objects could have absolute paths,
 				# We have to trim them
 				ele['file'] = os.path.relpath(ele['file'],workdir)
-				# If some element had failures, then the
-				# returned code is 400
-				if not ele['validated']:
-					http_code = 400
 		
 		return retval , http_code
 
@@ -215,10 +219,11 @@ class MultipartValidation(FTVResource):
 						ele['file'] = client_archive + '::' + client_path
 						break
 			
+			# If some element had failures, then the
+			# returned code is still 200
+			http_code = 200
 			if len(failed_retval) > 0:
 				retval.extend(failed_retval)
-			elif all(map(lambda x: x['validated'],retval)):
-				http_code = 200
 		else:
 			retval = failed_retval
 		
