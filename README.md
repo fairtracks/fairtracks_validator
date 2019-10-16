@@ -6,6 +6,12 @@ The validation and consistency check tools are hosted in this directory. They we
 
 These tools (currently, both [Python](python) and [Java](java)) implement next extensions:
 
+* Unique values check: When the `unique` attribute is declared, the values assigned in that part of the schema on a set of JSON contents must be unique. The check includes all the loaded JSON contents. There are several examples inside [test-data](test-data). Its behaviour is the next:
+
+  + If `unique` is a _`true`_ JSON value, the whole value in that position is used for the uniqueness check.
+  
+  + If `unique` is an array of strings, and the whole value is an object, those strings are the names of the keys whose values form the tuple to be validated.
+
 * Format `curie`: This format represents a CURIE, whose namespace should be registered in [identifiers.org](https://identifiers.org/) (a copy of the registry is downloaded and cached). When this format is used, next attributes are used to manage its behavior:
   
   + `namespace`: It can be either a single string, or an array of them. Each one of these strings are the schemes allowed for the values. The schemes should be registered in [identifiers.org](https://identifiers.org/).
