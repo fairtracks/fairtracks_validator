@@ -9,7 +9,7 @@ from flask_restplus import Api, Namespace, Resource
 from flask_cors import CORS
 from flask_compress import Compress
 
-from .ft_validator import FAIRTracksValidator
+from .ft_validator import FAIRTracksValidatorSingleton
 
 from .res.ns import ROUTES as ROOT_ROUTES
 from .res.schemas import ROUTES as SCHEMAS_ROUTES
@@ -33,7 +33,7 @@ def _register_ft_namespaces(api,res_kwargs):
 def init_validator_app(local_config):
 	# This is the singleton instance shared by all the resources
 	# This is done early, so it fails before setting all
-	FTValidator = FAIRTracksValidator(local_config)
+	FTValidator = FAIRTracksValidatorSingleton(local_config)
 	
 	app = Flask('fairtracks_validator')
 	
@@ -52,7 +52,7 @@ def init_validator_app(local_config):
 	# Attaching the API to the app 
 	api = Api(
 		app=blueprint,
-		version=FAIRTracksValidator.APIVersion,
+		version=FAIRTracksValidatorSingleton.APIVersion,
 		title='FAIRification of Genomic Data Tracks JSON Schema validator REST API',
 		description='This API allows validating JSON contents following JSON Schema defined at https://github.com/fairtracks/fairtracks_standard/',
 		default='ftv',

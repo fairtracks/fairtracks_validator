@@ -42,7 +42,7 @@ schema_info_model = SCHEMAS_NS.model('SchemaInfo', {
 	'source_urls': fields.List(fields.String,required=True, description = 'URL location of the JSON Schema'),
 	'fetched_at': fields.DateTime,
 	'errors': fields.List(fields.Nested(schema_error_model),required=False, description = 'The list of detected errors when the JSON Schema was initially processed'),
-	'schema_hash': fields.String(required=False, description = 'The SHA1 hash of the normalized JSON Schema, in hexadecima representation'),
+	'schema_hash': fields.String(required=False, description = 'The SHA1 hash of the normalized JSON Schema, in hexadecimal representation'),
 	'schema_id': fields.String(required=False, description = 'The id of the schema'),
 })
 
@@ -69,6 +69,8 @@ validation_input_model = VALIDATE_NS.model('ValidationInput', {
 validation_model = VALIDATE_NS.model('Validation', {
 	'file': fields.String(required=True, description = 'The filename of the JSON which was validated, if it was available'),
 	'validated': fields.Boolean(required=True, description = "Validation result"),
+	'schema_id': fields.String(required=False, description = 'The id of the schema used to validate'),
+	'schema_hash': fields.String(required=False, description = 'The SHA1 hash of the normalized JSON Schema used to validate, in hexadecimal representation'),
 	'errors': fields.List(fields.Nested(schema_error_model),required=False, description = 'The list of detected errors when the JSON is processed'),
 })
 

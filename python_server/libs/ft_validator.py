@@ -7,7 +7,6 @@ import tempfile
 import re
 import json
 import datetime
-import hashlib
 
 from urllib import request
 from urllib.error import *
@@ -21,8 +20,8 @@ import shutil
 
 from fairtracks_validator.validator import FairGTracksValidator
 
-class FAIRTracksValidator(object):
-	APIVersion = "0.2.4"
+class FAIRTracksValidatorSingleton(object):
+	APIVersion = "0.2.5"
 	HexSHAPattern = re.compile('^[0-9a-f]{2,}$')
 	CacheManifestFile = 'manifest.json'
 	
@@ -145,7 +144,7 @@ class FAIRTracksValidator(object):
 							schema_hash = None
 						else:
 							# The double-check of the cache
-							computed_schema_hash = self.GetNormalizedJSONHash(jss)
+							computed_schema_hash = FairGTracksValidator.GetNormalizedJSONHash(jss)
 							if schema_hash == computed_schema_hash:
 								curated_schema_info = {
 									'fetched_at': schema_info.get('fetched_at'),
@@ -220,7 +219,7 @@ class FAIRTracksValidator(object):
 								'description': str(e)
 							})
 						else:
-							schema_hash = self.GetNormalizedJSONHash(jss)
+							schema_hash = FairGTracksValidator.GetNormalizedJSONHash(jss)
 							
 							# Is this an schema?
 							#if jss.get('$schema') is not None:
@@ -323,13 +322,6 @@ class FAIRTracksValidator(object):
 		self.fgv.loadJSONSchemas(*cached_schemas)
 		
 	
-	@classmethod
-	def GetNormalizedJSONHash(cls,json_data):
-		# First, we serialize it in a reproducible way
-		json_canon = json.dumps(json_data,sort_keys=True,indent=None,separators=(',',':'))
-		
-		return hashlib.sha1(json_canon.encode('utf-8')).hexdigest()
-	
 	# This method is borrowed from
 	# https://github.com/inab/opeb-enrichers/blob/533b6f6aa93acc7f1f950bf4a37ee4d740a2965a/pubEnricher/libs/skeleton_pub_enricher.py#L603
 	# This method does the different reads and retries
@@ -428,6 +420,12 @@ class FAIRTracksValidator(object):
 		# happened inside the validation
 		parsed_jsons = self.fgv.jsonValidate(*cached_jsons)
 		
-		return list(map(lambda jsonObj: {'file': jsonObj['file'], 'validated': len(jsonObj['errors'])==0,'errors':jsonObj['errors']}, parsed_jsons))
+		return list(map(lambda jsonObj: {
+			'file': jsonObj['file'],
+			'validated': len(jsonObj['errors'])==0,
+			'errors': jsonObj['errors'],
+			'schema_id': jsonObj.get('schema_id'),
+			'schema_hash': jsonObj.get('schema_hash')
+		}, parsed_jsons))
 	
 		
