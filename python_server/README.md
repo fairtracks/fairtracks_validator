@@ -10,7 +10,11 @@ This server provides next endpoints:
 
 Once you have properly installed the server, if you run it in debug mode and open http://127.0.0.1:5000/ you will be able to browse and test the FAIR Tracks JSON Schema validator API using the embedded Swagger UI instance. The OpenAPI definition is available at the standard location, http://127.0.0.1:5000/swagger.json
 
-## Usage examples with [cURL](https://curl.haxx.se/)
+## Walk through using public server
+
+[![asciicast](https://asciinema.org/a/279246.svg)](https://asciinema.org/a/279246)
+
+## Usage examples with a local instance and [cURL](https://curl.haxx.se/)
 
 * Validating a single file:
 
