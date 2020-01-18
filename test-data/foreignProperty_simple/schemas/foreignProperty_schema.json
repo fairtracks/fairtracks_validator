@@ -1,0 +1,22 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "foreignProperty_example/1.0",
+    "title": "foreignProperty implementation example",
+    "type": "object",
+    "properties": {
+        "@schema": {
+            "description": "The JSON schema id",
+            "type": "string",
+            "const": "foreignProperty_example/1.0"
+        },
+        "ref_local_id": {
+            "description": "An id referencing other one in a different schema",
+            "type": "string",
+            "foreignProperty": "unique_example/1.0#local_id"
+        }
+    },
+    "required": [
+        "ref_local_id"
+    ],
+    "additionalProperties": false
+}

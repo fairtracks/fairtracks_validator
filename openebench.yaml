@@ -1,0 +1,9 @@
+# Configuration file for OpenEBench
+primary_key:
+  provider:
+    - 'https://openebench.bsc.es/openebench/rest/public/'
+    - 'https://openebench.bsc.es/openebench/rest/breed/'
+    - 'https://dev-openebench.bsc.es/openebench/rest/public/'
+    - 'https://dev-openebench.bsc.es/openebench/rest/breed/'
+  schema_prefix: 'https://www.elixir-europe.org/excelerate/WP2/json-schemas/1.0/'
+  accept: 'text/uri-list'
