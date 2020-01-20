@@ -22,17 +22,17 @@ These tools (currently, [Python](python), as [Java](java) implementation is a bi
   
   + If `primary_key` is an array of strings, and the whole value is an object, those strings are the names of the keys whose values form the tuple to be validated.
   
-  Unlike `unique`, you can even pre-populate the list of primary key values through the YAML configuration file. It should have something like:
-  
-  ```yaml
-  primary_key:
-    provider:
-      - 'https://openebench.bsc.es/openebench/rest/public/'
-    schema_prefix: 'https://www.elixir-europe.org/excelerate/WP2/json-schemas/1.0/'
-    accept: 'text/uri-list'
-  ```
-  
-  to fetch keys in CSV format from several sources, using as request prefix the different providers, using the suffix of the schema IRI on the composition.
+  + You can even pre-populate the list of primary key values through the YAML configuration file. It should have something like:
+    
+    ```yaml
+    primary_key:
+      provider:
+        - 'https://openebench.bsc.es/openebench/rest/public/'
+      schema_prefix: 'https://www.elixir-europe.org/excelerate/WP2/json-schemas/1.0/'
+      accept: 'text/uri-list'
+    ```
+    
+    to fetch keys in CSV format from several sources, using as request prefix the different providers, using the suffix of the schema IRI on the composition.
 
 * __Foreign key values check__: When the `foreign_keys` attribute is declared, parts of the values in that part of the schema must correlate to the values obtained from a primary key from other JSON Schema. As there can be more than one foreign key, `foreign_keys` expects an array of objects describing each foreign key relation. Those objects must have next keys:
 
@@ -52,6 +52,8 @@ These tools (currently, [Python](python), as [Java](java) implementation is a bi
       - `loose`: (default). It validates that the value (either having or not the scheme prefix) is valid against any of the patterns registered in [identifiers.org](https://identifiers.org/) for the schemes declared in `namespace` attribute.
 
       - `canonical`: The value must always have a correct scheme prefix, and the value to the right of the prefix must validate against the pattern registered on the namespace with the same scheme.
+  
+  + This extension acknowledges `cacheDir` key in the configuration passed to the extension on initialization.
 
 * Format `term`: This format represents an ontology term, which must be valid in one or more ontologies publicly reachable. When this format is used, next attributes are used to change its behavior:
 
@@ -66,6 +68,17 @@ These tools (currently, [Python](python), as [Java](java) implementation is a bi
       - `label`: The value must be equal to at least one label assigned to an ontological term defined in one of the ontologies.
   
   + `ancestors`: This attribute can be either a single IRI or an array of them. The terms declared here must exist in at least one ontology, and the values to validate must have among its ancestors at least one of these terms.
+  
+  + This extension acknowledges `cacheDir` key in the configuration passed to the extension on initialization.
+  
+  + This extension is also able to run a reasoner over the ontologies when they are fetched at first. But, as it is a very consuming process on large ontologies, it is disabled by default. The way to enable it is through the configuration passed to the extension, which must have something similar to:
+  
+    ```yaml
+    ontology:
+      do-reasoning: true
+    ```
+    
+    As the reasoner is [HermiT](http://www.hermit-reasoner.com/), you also need to install a Java Virtual Machine (if it is not installed yet).
 
 You can use any of the reference implementations, [Python 2.x / 3.x](python) and [Java 8+](java), as any of them should do the same validations and consistency checks than the others.
 
