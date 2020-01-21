@@ -35,17 +35,25 @@ class Validation(FTVResource):
 		'''It validates the input JSON against the recorded JSON schemas'''
 		retval = {}
 		http_code = 400
+		retval_headers = {}
 		
 		json_data = request.get_json(silent=True)
 		if json_data is not None:
 			# It means the input is JSON (as expected), but nothing more
 			http_code = 200
 			
-			retval = self.ftv.validate(json_data)[0]
+			retval_tuple = self.ftv.validate(json_data)[0]
+			if isinstance(retval_tuple,tuple):
+				retval = retval_tuple[0]
+				http_code = retval_tuple[1]
+				if len(retval_tuple) >= 3:
+					retval_headers = retval_tuple[2]
+			else:
+				retval = retval_tuple
 		else:
 			retval = {'validated': False, 'errors': [{'reason': 'fatal', 'description': 'There were problems processing incoming JSON (is it a valid one?)'}]}
 		
-		return retval, http_code
+		return retval, http_code, retval_headers
 
 class ArrayValidation(FTVResource):
 	'''Validates a JSON against the recorded JSON Schemas'''
@@ -58,16 +66,25 @@ class ArrayValidation(FTVResource):
 		'''It validates the input array of JSONs against the recorded JSON schemas'''
 		retval = []
 		http_code = 400
+		retval_headers = {}
 		
 		json_data = request.get_json(silent=True)
 		if isinstance(json_data,list):
 			# It means the input is a JSON array (as expected), but nothing more
 			http_code = 200
-			retval = self.ftv.validate(*json_data)
+			retval_tuple = self.ftv.validate(*json_data)
+			
+			if isinstance(retval_tuple,tuple):
+				retval = retval_tuple[0]
+				http_code = retval_tuple[1]
+				if len(retval_tuple) >= 3:
+					retval_headers = retval_tuple[2]
+			else:
+				retval = retval_tuple
 		else:
 			retval.append({'validated': False, 'errors': [{'reason': 'fatal', 'description': 'There were problems processing incoming JSON array (is it a valid one?)'}]})
 		
-		return retval , http_code
+		return retval , http_code , retval_headers
 
 class ArchiveValidation(FTVResource):
 	'''Validates a JSON against the recorded JSON Schemas'''
@@ -79,6 +96,7 @@ class ArchiveValidation(FTVResource):
 		'''It validates the input archive full of JSONs the recorded JSON schemas'''
 		retval = []
 		http_code = 400
+		retval_headers = {}
 		workdir = None
 		
 		raw_data = request.get_data()
@@ -118,21 +136,30 @@ class ArchiveValidation(FTVResource):
 			
 			
 		if workdir is not None:
-			retval = self.ftv.validate((workdir,None))
+			retval_tuple = self.ftv.validate((workdir,None))
+			
+			if isinstance(retval_tuple,tuple):
+				retval = retval_tuple[0]
+				http_code = retval_tuple[1]
+				if len(retval_tuple) >= 3:
+					retval_headers = retval_tuple[2]
+			else:
+				retval = retval_tuple
 			
 			# Temporary directory and its contents
 			# are not needed any more
 			shutil.rmtree(workdir,ignore_errors=True)
 			
-			# If some element had failures, then the
-			# returned code is still 200
-			http_code = 200
-			for ele in retval:
-				# As parsed objects could have absolute paths,
-				# We have to trim them
-				ele['file'] = os.path.relpath(ele['file'],workdir)
+			if http_code < 500:
+				# If some element had failures, then the
+				# returned code is still 200
+				http_code = 200
+				for ele in retval:
+					# As parsed objects could have absolute paths,
+					# We have to trim them
+					ele['file'] = os.path.relpath(ele['file'],workdir)
 		
-		return retval , http_code
+		return retval , http_code , retval_headers
 
 class MultipartValidation(FTVResource):
 	'''Validates a JSON against the recorded JSON Schemas'''
@@ -146,6 +173,7 @@ class MultipartValidation(FTVResource):
 		'''It validates the input JSON files against the recorded JSON schemas'''
 		retval = []
 		failed_retval = []
+		retval_headers = {}
 		http_code = 400
 		
 		json_data = []
@@ -203,27 +231,36 @@ class MultipartValidation(FTVResource):
 			failed_retval.append({'validated': False, 'errors': [{'reason': 'fatal', 'description': 'There were problems processing incoming files from form'}]})
 		
 		if json_data:
-			retval = self.ftv.validate(*json_data)
+			retval_tuple = self.ftv.validate(*json_data)
+			
+			if isinstance(retval_tuple,tuple):
+				retval = retval_tuple[0]
+				http_code = retval_tuple[1]
+				if len(retval_tuple) >= 3:
+					retval_headers = retval_tuple[2]
+			else:
+				retval = retval_tuple
 			
 			# Cleaning up resources
 			for _,workdir in workdir_data:
 				shutil.rmtree(workdir,ignore_errors=True)
 			
-			for ele in retval:
-				# As parsed objects could have absolute paths,
-				# We have to trim them
-				for client_archive, workdir in workdir_data:
-					if ele['file'].startswith(workdir):
-						client_path = os.path.relpath(ele['file'],workdir)
-						
-						ele['file'] = client_archive + '::' + client_path
-						break
-			
-			# If some element had failures, then the
-			# returned code is still 200
-			http_code = 200
-			if len(failed_retval) > 0:
-				retval.extend(failed_retval)
+			if http_code < 500:
+				for ele in retval:
+					# As parsed objects could have absolute paths,
+					# We have to trim them
+					for client_archive, workdir in workdir_data:
+						if ele['file'].startswith(workdir):
+							client_path = os.path.relpath(ele['file'],workdir)
+							
+							ele['file'] = client_archive + '::' + client_path
+							break
+				
+				# If some element had failures, then the
+				# returned code is still 200
+				http_code = 200
+				if len(failed_retval) > 0:
+					retval.extend(failed_retval)
 		else:
 			retval = failed_retval
 		

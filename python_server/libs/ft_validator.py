@@ -20,8 +20,10 @@ import shutil
 
 from fairtracks_validator.validator import FairGTracksValidator
 
+from .rw_file_lock import RWFileLock , LockError
+
 class FAIRTracksValidatorSingleton(object):
-	APIVersion = "0.2.5"
+	APIVersion = "0.3.0"
 	HexSHAPattern = re.compile('^[0-9a-f]{2,}$')
 	CacheManifestFile = 'manifest.json'
 	
@@ -33,49 +35,61 @@ class FAIRTracksValidatorSingleton(object):
 		self._debug = False
 		self.max_retries = self.DEFAULT_MAX_RETRIES
 		
-		# Let's initialize the whole system
-		self.local_config = local_config
-		self.invalidation_key = local_config.get('invalidation_key',self.DEFAULT_INVALIDATION_KEY)
-		self.fgv = FairGTracksValidator()
+		# This variable should be honoured by the API
+		# so no query is allowed meanwhile we are offline
+		self.offline = True
 		
-		self.init_cache(local_config)
-		self.validateCachedJSONSchemas()
-	
-	def invalidate_cache(self,invalidation_key):
-		# Cleaning up the cached schemas
-		if self.invalidation_key == invalidation_key:
-			if self.cacheDir:
-				for elem in os.scandir(path=self.cacheDir):
-					if elem.is_dir() and not elem.is_symlink():
-						shutil.rmtree(elem.path, ignore_errors=True)
-					else:
-						os.remove(elem.path)
-			
-			self.fgv = FairGTracksValidator()
-			self.init_cache(self.local_config)
-			self.validateCachedJSONSchemas()
-			
-			return True
-		else:
-			return False
-	
-	def init_cache(self,local_config):
-		# 1. Initialize the cache directory
-		self.cacheDir = local_config.get('cacheDir')
+		# Let's initialize the whole system
+		self.config = local_config
+		self.cacheDir = self.config.get('cacheDir')
 		
 		if self.cacheDir is None:
 			self.cacheDir = tempfile.mkdtemp(prefix="ftv", suffix="cache")
 			# Remember to remove the directory at exit
 			atexit.register(shutil.rmtree, self.cacheDir, ignore_errors=True)
-			
-		elif not os.path.isdir(self.cacheDir):
-			os.makedirs(self.cacheDir)
+			self.config['cacheDir'] = self.cacheDir
 		
+		self.schemaCacheDir = os.path.join(self.cacheDir,'schema_cache')
+		
+		if not os.path.isdir(self.schemaCacheDir):
+			os.makedirs(self.schemaCacheDir)
+		
+		schemaCacheLockFile = os.path.join(self.cacheDir,'schema_cache.lock')
+		extensionsCacheLockFile = os.path.join(self.cacheDir,'extensions_cache.lock')
+		
+		self.SchemaCacheLock = RWFileLock(filename=schemaCacheLockFile)
+		
+		self.ExtensionsCacheLock = RWFileLock(filename=extensionsCacheLockFile)
+		
+		self.invalidation_key = local_config.get('invalidation_key',self.DEFAULT_INVALIDATION_KEY)
+		
+		self.init_server()
+	
+	def init_server(self):
+		self.offline = True
+		with self.SchemaCacheLock.exclusive_blocking_lock():
+			self._init_server()
+		
+		with self.ExtensionsCacheLock.exclusive_blocking_lock():
+			self.fgv.warmUpCaches()
+		
+		self.offline = False
+	
+	def _init_server(self):
+		# The server is initialized
+		self.fgv = FairGTracksValidator(config=self.config)
+		
+		# Do this in a separate thread
+		self.init_cache()
+		self.validateCachedJSONSchemas()
+	
+	def init_cache(self):
+		# 1. Cache directory should exist at this point
 		# These variables are dictionaries to check whether we are reading something twice
 		schemas = []
 		
 		# 2. Read previous cache manifest
-		manifest_path = os.path.join(self.cacheDir,self.CacheManifestFile)
+		manifest_path = os.path.join(self.schemaCacheDir,self.CacheManifestFile)
 		manifest = {}
 		if os.path.isfile(manifest_path):
 			try:
@@ -101,7 +115,7 @@ class FAIRTracksValidatorSingleton(object):
 		self.manifest = manifest
 		
 		# 3. Pre-populating the list
-		initial_source_urls = local_config.get('schemas',[])
+		initial_source_urls = self.config.get('schemas',[])
 		self.initial_source_urls = initial_source_urls
 		if len(initial_source_urls) > 0:
 			schemas.append({'source_urls': initial_source_urls})
@@ -129,7 +143,7 @@ class FAIRTracksValidatorSingleton(object):
 				# The schema has not been curated yet
 				if curated_schema is None:
 					jsc_path = schema_hash
-					full_jsc_path = os.path.join(self.cacheDir,jsc_path)
+					full_jsc_path = os.path.join(self.schemaCacheDir,jsc_path)
 					
 					if os.path.isfile(full_jsc_path):
 						# If it is a file, let's parse it
@@ -238,7 +252,7 @@ class FAIRTracksValidatorSingleton(object):
 							
 							# Only here it is saved to the caching dir
 							jsc_path = schema_hash
-							full_jsc_path = os.path.join(self.cacheDir,jsc_path)
+							full_jsc_path = os.path.join(self.schemaCacheDir,jsc_path)
 							try:
 								# Save it!
 								with open(full_jsc_path,'wb') as jssh:
@@ -380,52 +394,102 @@ class FAIRTracksValidatorSingleton(object):
 	def set_api_instance(self,api):
 		self.api = api
 	
+	# Next methods are called from the different endpoint implementations
+	# (indeed, they are the endpoint implementations!)
+	
+	def invalidate_cache(self,invalidation_key,invalidateExtensionsCache=False):
+		# Cleaning up the cached schemas
+		if self.invalidation_key == invalidation_key:
+			self.offline = True
+			
+			# Removing only the schemas cache
+			with self.SchemaCacheLock.exclusive_blocking_lock():
+				for elem in os.scandir(path=self.schemaCacheDir):
+					if elem.is_dir() and not elem.is_symlink():
+						shutil.rmtree(elem.path, ignore_errors=True)
+					else:
+						os.remove(elem.path)
+			
+			# Also removing the extensions cache
+			if invalidateExtensionsCache:
+				with self.ExtensionsCacheLock.exclusive_blocking_lock():
+					self.ftv.invalidateCaches()
+			
+			self.init_server()
+			
+			return True
+		else:
+			return False
+	
+	BEING_UPDATED_RESPONSE=(['Server temporarily'], 503, {'Retry-After': '60'})
+	
 	def ftv_info(self):
-		return { 'version': self.APIVersion, 'config': {'schemas': self.initial_source_urls } }
+		try:
+			with self.SchemaCacheLock.shared_lock():
+				return { 'version': self.APIVersion, 'config': {'schemas': self.initial_source_urls } }
+		except LockError:
+			return self.BEING_UPDATED_RESPONSE
+		
 	
 	def list_schemas(self):
-		return self.manifest['schemas']
+		try:
+			with self.SchemaCacheLock.shared_lock():
+				return self.manifest['schemas']
+		except LockError:
+			return self.BEING_UPDATED_RESPONSE
 	
 	def get_schema_info(self,schema_hash):
-		_schema = self._schemas.get(schema_hash)
-		if _schema is None:
-			self.api.abort(404, 'JSON Schema whose hash is {} is not recorded'.format(schema_hash))
-		
-		return _schema['info']
+		try:
+			with self.SchemaCacheLock.shared_lock():
+				_schema = self._schemas.get(schema_hash)
+				if _schema is None:
+					self.api.abort(404, 'JSON Schema whose hash is {} is not recorded'.format(schema_hash))
+				
+				return _schema['info']
+		except LockError:
+			return self.BEING_UPDATED_RESPONSE
 	
 	def get_schema(self,schema_hash):
-		_schema = self._schemas.get(schema_hash)
-		_schema_source = None  if _schema is None else _schema.get('source')
-		if _schema_source is None:
-			self.api.abort(404, 'JSON Schema source whose hash is {} is not recorded'.format(schema_hash))
-		
-		return _schema_source
+		try:
+			with self.SchemaCacheLock.shared_lock():
+				_schema = self._schemas.get(schema_hash)
+				_schema_source = None  if _schema is None else _schema.get('source')
+				if _schema_source is None:
+					self.api.abort(404, 'JSON Schema source whose hash is {} is not recorded'.format(schema_hash))
+				
+				return _schema_source
+		except LockError:
+			return self.BEING_UPDATED_RESPONSE
 	
 	def validate(self,*json_data):
-		cached_jsons = []
-		for i_json, loaded_json_piece in enumerate(json_data):
-			if isinstance(loaded_json_piece,tuple):
-				loaded_json_path , loaded_json = loaded_json_piece
-			else:
-				loaded_json_path = '(inline'+str(i_json)+')'
-				loaded_json = loaded_json_piece
-			
-			if loaded_json is None:
-				cached_jsons.append(loaded_json_path)
-			else:
-				cached_jsons.append({'json': loaded_json, 'file': loaded_json_path, 'errors': []})
-		
-		# As the input may be a directory full of JSONs, the output
-		# from this method is the only authorizative source of what
-		# happened inside the validation
-		parsed_jsons = self.fgv.jsonValidate(*cached_jsons)
-		
-		return list(map(lambda jsonObj: {
-			'file': jsonObj['file'],
-			'validated': len(jsonObj['errors'])==0,
-			'errors': jsonObj['errors'],
-			'schema_id': jsonObj.get('schema_id'),
-			'schema_hash': jsonObj.get('schema_hash')
-		}, parsed_jsons))
+		try:
+			with self.SchemaCacheLock.shared_lock(), self.ExtensionsCacheLock.shared_lock():
+				cached_jsons = []
+				for i_json, loaded_json_piece in enumerate(json_data):
+					if isinstance(loaded_json_piece,tuple):
+						loaded_json_path , loaded_json = loaded_json_piece
+					else:
+						loaded_json_path = '(inline'+str(i_json)+')'
+						loaded_json = loaded_json_piece
+					
+					if loaded_json is None:
+						cached_jsons.append(loaded_json_path)
+					else:
+						cached_jsons.append({'json': loaded_json, 'file': loaded_json_path, 'errors': []})
+				
+				# As the input may be a directory full of JSONs, the output
+				# from this method is the only authorizative source of what
+				# happened inside the validation
+				parsed_jsons = self.fgv.jsonValidate(*cached_jsons)
+				
+				return list(map(lambda jsonObj: {
+					'file': jsonObj['file'],
+					'validated': len(jsonObj['errors'])==0,
+					'errors': jsonObj['errors'],
+					'schema_id': jsonObj.get('schema_id'),
+					'schema_hash': jsonObj.get('schema_hash')
+				}, parsed_jsons))
+		except LockError:
+			return self.BEING_UPDATED_RESPONSE
 	
 		

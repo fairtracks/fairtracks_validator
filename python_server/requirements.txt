@@ -1,6 +1,8 @@
-# This is a temporary fix
+# BEGIN: temporary fix until owlready releases a fixed version
+cython
 hg+https://bitbucket.org/jibalamy/owlready2@37c3ef7e481c94ae8a59796d37d64f60ba686014#egg=Owlready2
-git+https://github.com/fairtracks/fairtracks_validator.git@151c217e114ebe2c2bdf7b34455ed0800d3122c7#egg=fairtracks-validator&subdirectory=python
+# END: temporary fix
+git+https://github.com/fairtracks/fairtracks_validator.git@98631db04378ced932349329c8e9b89efdc3571e#egg=fairtracks-validator&subdirectory=python
 pyyaml
 flask
 flask-cors

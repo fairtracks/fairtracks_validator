@@ -15,15 +15,30 @@ class SchemasList(FTVResource):
 		'''List all schemas'''
 		return self.ftv.list_schemas()
 
-class SchemasInvalidate(FTVResource):
+class AbstractSchemasInvalidate(FTVResource):
+	'''It invalidates the cached schemas'''
+	def invalidate(self,invalidation_key,invalidateExtensionsCache):
+		'''It invalidates the cached JSON schemas, forcing to fetch them again'''
+		http_code = 200  if self.ftv.invalidate_cache(invalidation_key,invalidateExtensionsCache) else 403
+		return [], http_code
+
+class SchemasInvalidate(AbstractSchemasInvalidate):
 	'''It invalidates the cached schemas'''
 	@SCHEMAS_NS.response(200, 'Cached JSON Schemas have been fetched again')
 	@SCHEMAS_NS.response(403, 'Wrong invalidation key')
 	@SCHEMAS_NS.doc('schemas_invalidate')
 	def delete(self,invalidation_key):
 		'''It invalidates the cached JSON schemas, forcing to fetch them again'''
-		http_code = 200  if self.ftv.invalidate_cache(invalidation_key) else 403
-		return [], http_code
+		return self.invalidate(invalidation_key,False)
+	
+class SchemasFullInvalidate(AbstractSchemasInvalidate):
+	'''It fully invalidates the cached schemas'''
+	@SCHEMAS_NS.response(200, 'Cached JSON Schemas have been fetched again')
+	@SCHEMAS_NS.response(403, 'Wrong invalidation key')
+	@SCHEMAS_NS.doc('schemas_invalidate')
+	def delete(self,invalidation_key):
+		'''It invalidates the cached JSON schemas, forcing to fetch them again'''
+		return self.invalidate(invalidation_key,True)
 
 @SCHEMAS_NS.response(404, 'Schema not found')
 @SCHEMAS_NS.param('schema_hash', 'The schema hash')
@@ -51,6 +66,7 @@ ROUTES={
 	'routes': [
 		(SchemasList,''),
 		(SchemasInvalidate,'/invalidate/<string:invalidation_key>'),
+		(SchemasFullInvalidate,'/invalidate/<string:invalidation_key>/full'),
 		(SchemaInfo,'/<string:schema_hash>'),
 		(Schema,'/<string:schema_hash>/schema')
 	]

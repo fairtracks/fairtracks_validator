@@ -8,7 +8,10 @@ import werkzeug
 from flask_restplus import Namespace, Api, Resource, fields, reqparse
 
 class FTVResource(Resource):
-	'''This class eases passing the instance of the validator API'''
+	'''
+	This class eases passing the instance of the validator API.
+	Also, it should use a RWLock on calls
+	'''
 	def __init__(self,api=None,*args,**kwargs):
 		super().__init__(api,*args,**kwargs)
 		self.ftv = kwargs['ftv']

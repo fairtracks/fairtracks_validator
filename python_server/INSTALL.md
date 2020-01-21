@@ -49,6 +49,8 @@ The format of the configuration file is simple, as only  two keys are acknowledg
 
 * _`cacheDir`_, which is a directory where the schemas are cached.
 
+The configuration file is also holding the configuration blocks and customizations used by the JSON Schema extensions ([more information is here](../README.md)).
+
 ## Debug testing
 
 In order to test the server in debug mode, you only have to run it in the previously created environment:
@@ -60,7 +62,6 @@ In order to test the server in debug mode, you only have to run it in the previo
 If you can read something like next, it is properly working, waiting for request at port 5000 (the default one):
 
 ```
-* Owlready2 * Warning: optimized Cython parser module 'owlready2_optimized' is not available, defaulting to slower Python implementation
  * Serving Flask app "fairtracks_validator" (lazy loading)
  * Environment: production
    WARNING: This is a development server. Do not use it in a production deployment.
@@ -68,9 +69,8 @@ If you can read something like next, it is properly working, waiting for request
  * Debug mode: on
  * Running on http://127.0.0.1:5000/ (Press CTRL+C to quit)
  * Restarting with stat
-* Owlready2 * Warning: optimized Cython parser module 'owlready2_optimized' is not available, defaulting to slower Python implementation
  * Debugger is active!
- * Debugger PIN: 294-971-606
+ * Debugger PIN: 338-571-659
 ```
 
 If you open http://127.0.0.1:5000/ you will be able to browse and test the FAIR Tracks JSON Schema validator API using the embedded Swagger UI instance. The OpenAPI definition is available at the standard location, http://127.0.0.1:5000/swagger.json
