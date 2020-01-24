@@ -39,6 +39,7 @@ def init_validator_app(local_config):
 	
 	# Setting up the temp upload folder size
 	app.config['MAX_CONTENT_LENGTH'] = round(float(local_config.get('max_file_size',DEFAULT_MAX_FILE_SIZE_IN_MB)) * 1024 * 1024)
+	app.config.SWAGGER_UI_DOC_EXPANSION = 'list'
 	
 	blueprint = Blueprint('api','fairtracks_validator_api')
 	#blueprint = Blueprint('api','fairtracks_validator_api',static_url_path='/',static_folder='static')
