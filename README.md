@@ -80,7 +80,7 @@ These tools (currently, [Python](python), as [Java](java) implementation is a bi
     
     As the reasoner is [HermiT](http://www.hermit-reasoner.com/), you also need to install a Java Virtual Machine (if it is not installed yet).
 
-You can use any of the reference implementations, [Python 2.x / 3.x](python) and [Java 8+](java), as any of them should do the same validations and consistency checks than the others.
+You can use any of the reference implementations, [Python 3.5.9 + / 3.6.x or later](python) and [Java 8+](java), as any of them should do the same validations and consistency checks than the others.
 
 There is also a [Python validation server](python_server), which uses [Python extendend validator](Python). You can find more documentation in that subdirectory.
 

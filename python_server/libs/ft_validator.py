@@ -23,7 +23,7 @@ from fairtracks_validator.validator import FairGTracksValidator
 from .rw_file_lock import RWFileLock , LockError
 
 class FAIRTracksValidatorSingleton(object):
-	APIVersion = "0.3.0"
+	APIVersion = "0.3.1"
 	HexSHAPattern = re.compile('^[0-9a-f]{2,}$')
 	CacheManifestFile = 'manifest.json'
 	
