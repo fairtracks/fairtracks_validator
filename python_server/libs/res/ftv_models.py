@@ -5,7 +5,7 @@
 import sys, os
 
 import werkzeug
-from flask_restplus import Namespace, Api, Resource, fields, reqparse
+from flask_restx import Namespace, Api, Resource, fields, reqparse
 
 class FTVResource(Resource):
 	'''
