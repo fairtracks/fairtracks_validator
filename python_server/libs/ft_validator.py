@@ -20,7 +20,7 @@ import shutil
 
 from fairtracks_validator.validator import FairGTracksValidator
 
-from .rw_file_lock import RWFileLock , LockError
+from RWFileLock import RWFileLock , LockError
 
 class FAIRTracksValidatorSingleton(object):
 	APIVersion = "0.3.1"
