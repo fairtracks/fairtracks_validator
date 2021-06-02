@@ -36,7 +36,8 @@ fi
 
 if [ -d "$PYBASEDIR" ] ; then
 	source "${PYBASEDIR}/bin/activate"
-	exec python "${BASEDIR}/$(basename "$0")".py "$@"
+	#exec pprofile -o /tmp/pprofile_$$.txt --exclude-syspath "${BASEDIR}/$(basename "$0")".py "$@"
+	exec python3 "${BASEDIR}/$(basename "$0")".py "$@"
 else
 	echo "UNCONFIGURED" 1>&2
 	exit 1
