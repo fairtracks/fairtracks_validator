@@ -146,7 +146,7 @@
                                     "type": "string",
                                     "format": "term",
                                     "ontology": [
-                                        "http://www.ebi.ac.uk/efo/releases/v2018-02-15/efo.owl",
+                                        "https://github.com/EBISPOT/efo/releases/download/v3.0.0/efo.owl",
                                         "http://purl.obolibrary.org/obo/cl/releases/2018-07-07/cl.owl",
                                         "http://purl.obolibrary.org/obo/uberon/releases/2018-07-30/uberon.owl"
                                     ],

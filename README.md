@@ -2,9 +2,9 @@
 
 **NOTE:** _This repo was originally hosted at [FAIRification of Genomic Data Tracks Standards](//github.com/fairtracks/fairtracks_standard) repository, where the defined JSON Schemas are maintained_
 
-The validation and consistency check tools are hosted in this directory. They were designed to work on complete sets of JSON files, spread over several directories.
+The validation and consistency check tools are linked and / or hosted in this repository. They were designed to work on complete sets of JSON files, spread over several directories.
 
-These tools (currently, [Python](python), as [Java](java) implementation is a bit behind) implement next extensions:
+These tools (currently, [Python](//github.com/fairtracks/fairtracks_validator_python), as [Java](java) implementation is a bit behind) implement next extensions:
 
 * __Unique values check__: When the `unique` attribute is declared, the values assigned in that part of the schema on a set of JSON contents must be unique. The check includes all the loaded JSON contents. There are several examples inside [test-data](test-data). Its behaviour is the next:
 
@@ -88,4 +88,8 @@ You can find in [test-data](test-data) a JSON Schema using these formats, and al
 
 ## Original work
 
-The code currently in this repository started as a fork from code currently available at [extended JSON Schema validators](//github.com/inab/extended-json-schema-validators) repository.
+The code developed in this repository started as a fork from code currently available at [extended JSON Schema validators](//github.com/inab/extended-json-schema-validators) repository.
+
+Later, the different extensions in Python gained real modularisation, and the core and the different extensions were interesting in very different projects.
+
+As extended JSON validation Python code is relevant to several research projects, it has been split from this repo, keeping the core and original extensions at [https://github.com/inab/python-extended-json-schema-validator](https://github.com/inab/python-extended-json-schema-validator), and keeping specific FAIRTracks extensions at [https://github.com/fairtracks/fairtracks_validator_python](https://github.com/fairtracks/fairtracks_validator_python). Both of them are now available at PyPi.
