@@ -6,6 +6,7 @@ import os, sys
 import tempfile
 import re
 import json
+import logging
 import datetime
 
 from urllib import request
@@ -18,7 +19,7 @@ import collections
 import atexit
 import shutil
 
-from fairtracks_validator.validator import FairGTracksValidator
+from fairtracks_validator.fairtracks_validator import FairGTracksValidator
 
 from RWFileLock import RWFileLock , LockError
 
@@ -31,8 +32,8 @@ class FAIRTracksValidatorSingleton(object):
 	DEFAULT_INVALIDATION_KEY = "InvalidateCachePleasePleasePlease!!!"
 	
 	def __init__(self,local_config,api=None):
+		self.logger = logging.getLogger(self.__class__.__name__)
 		self.api = api
-		self._debug = False
 		self.max_retries = self.DEFAULT_MAX_RETRIES
 		
 		# This variable should be honoured by the API
@@ -71,13 +72,17 @@ class FAIRTracksValidatorSingleton(object):
 			self._init_server()
 		
 		with self.ExtensionsCacheLock.exclusive_blocking_lock():
+			#import traceback
+			#print(f"warming up {os.getpid()}", file=sys.stderr)
+			#traceback.print_stack()
+			#sys.stderr.flush()
 			self.fgv.warmUpCaches()
 		
 		self.offline = False
 	
 	def _init_server(self):
 		# The server is initialized
-		self.fgv = FairGTracksValidator(config=self.config)
+		self.fgv = FairGTracksValidator(config=self.config, isRW=False)
 		
 		# Do this in a separate thread
 		self.init_cache()
@@ -368,22 +373,19 @@ class FAIRTracksValidatorSingleton(object):
 					# Using a backoff time of 2 seconds when 500 or 502 errors are hit
 					retries += 1
 					
-					if self._debug:
-						print("Retry {0} , due code {1}".format(retries,e.code),file=sys.stderr)
+					self.logger.debug("Retry {0} , due code {1}".format(retries,e.code),file=sys.stderr)
 					
 					time.sleep(2**retries)
 					last_exception = e
 				else:
 					if debug_url is not None:
-						print("URL with ERROR: "+debug_url+"\n",file=sys.stderr)
-						sys.stderr.flush()
+						self.logger.error("URL with ERROR: "+debug_url)
 					raise e
 			except socket.timeout as e:
 				# Using also a backoff time of 2 seconds when read timeouts occur
 				retries += 1
 				
-				if self._debug:
-					print("Retry {0} , due timeout".format(retries),file=sys.stderr)
+				self.logger.debug("Retry {0} , due timeout".format(retries),file=sys.stderr)
 				
 				time.sleep(2**retries)
 				last_exception = e

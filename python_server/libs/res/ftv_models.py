@@ -3,6 +3,7 @@
 # coding: utf-8
 
 import sys, os
+import logging
 
 import werkzeug
 from flask_restx import Namespace, Api, Resource, fields, reqparse
@@ -15,6 +16,7 @@ class FTVResource(Resource):
 	def __init__(self,api=None,*args,**kwargs):
 		super().__init__(api,*args,**kwargs)
 		self.ftv = kwargs['ftv']
+		self.logger = logging.getLogger(self.__class__.__name__)
 
 
 

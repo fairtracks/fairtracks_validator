@@ -3,6 +3,7 @@
 # coding: utf-8
 
 import sys, os
+import logging
 
 import libs.app
 
@@ -27,7 +28,11 @@ config_file = basis + '.yaml'
 with open(config_file,"r",encoding="utf-8") as cf:
 	local_config = yaml.load(cf,Loader=YAMLLoader)
 
+#print(f"JAO {os.environ.get('WERKZEUG_RUN_MAIN')}", file=sys.stderr)
+#sys.stderr.flush()
 app = libs.app.init_validator_app(local_config)
+
+DEFAULT_LOGGING_FORMAT = '%(asctime)-15s - [%(process)d][%(levelname)s] %(message)s'
 
 if __name__ == '__main__':
 	if len(sys.argv) > 1:
@@ -35,6 +40,7 @@ if __name__ == '__main__':
 		port = local_config.get('port',5000)
 		debug = sys.argv[1] != 'standalone'
 		if debug:
+			logLevel = logging.DEBUG
 			# Let's suppose it's a numerical port
 			try:
 				port = int(sys.argv[1])
@@ -43,9 +49,24 @@ if __name__ == '__main__':
 			
 			# Debug mode should not be tied to any interface
 			host = "127.0.0.1"
+		else:
+			logLevel = logging.INFO
 		
+		loggingConfig = {
+			'level': logLevel,
+			'format': DEFAULT_LOGGING_FORMAT,
+		#	'filename': 'debug-traces.txt',
+		}
+		logging.basicConfig(**loggingConfig)
+
 		app.run(debug=debug, port=port, host=host, threaded=False, processes=1)
 	else:
+		loggingConfig = {
+			'level': logging.ERROR,
+			'format': DEFAULT_LOGGING_FORMAT,
+		#	'filename': 'debug-traces.txt',
+		}
+		logging.basicConfig(**loggingConfig)
 		from flup.server.fcgi import WSGIServer
 
 		WSGIServer(app).run()
