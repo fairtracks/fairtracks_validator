@@ -16,7 +16,8 @@ PYBASEDIR="${BASEDIR}/.pyRESTenv"
 if [ ! -d "$PYBASEDIR" ] ; then
 	python3 -m venv "$PYBASEDIR"
 	source "$PYBASEDIR"/bin/activate
-	pip install --upgrade pip
+	pip install --upgrade pip wheel cython
+	pip cache remove Owlready2
 	pip install -r "${BASEDIR}"/requirements.txt -c "${BASEDIR}"/constraints.txt
 fi
 
