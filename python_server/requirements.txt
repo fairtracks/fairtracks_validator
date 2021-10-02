@@ -1,8 +1,8 @@
-git+https://github.com/inab/RWFileLock.git@v0.1.0#egg=RWFileLock
+RWFileLock >= 0.1.1
 #git+https://github.com/inab/BGServer.git@v0.2.0#egg=BGServer
-git+https://github.com/fairtracks/fairtracks_validator.git@0faedd0a12dabe9bf71b02c6a9cf8958b4c2e772#egg=fairtracks-validator&subdirectory=python
+fairtracks_validator >= 0.9.9
 pyyaml
-flask < 2.0
+flask
 flask-cors
 flask-restx
 flask-compress
