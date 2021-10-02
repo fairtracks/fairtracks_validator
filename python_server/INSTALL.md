@@ -1,6 +1,6 @@
 # FAIRification Genomic Data Tracks JSON Schema validation server install instructions
 
-The source code of this API is written for Python 3.5 or later. It depends on standard libreries, plus the ones declared in [requirements.txt](requirements.txt).
+The source code of this API is written for Python 3.6 or later. It depends on standard libraries, plus the ones declared in [requirements.txt](requirements.txt).
 
 * In order to install the dependencies you need `pip` and `venv` Python modules.
 	- In a Ubuntu clean installation, next packages are needed: `python3-venv`, `python3-dev`, `build-essential` and `git`.
@@ -12,7 +12,11 @@ The source code of this API is written for Python 3.5 or later. It depends on st
 ```bash
 python3 -m venv .pyRESTenv
 source .pyRESTenv/bin/activate
-pip install --upgrade pip
+# Cython must be available before Owlready2, a dependency
+# of fairtracks_validator, is built
+pip install --upgrade pip wheel cython
+# Owlready2 is removed from cache in case it was already there
+pip cache remove Owlready2
 pip install -r requirements.txt -c constraints.txt
 
 # Next commands are to assure a static swagger ui interface is in place
