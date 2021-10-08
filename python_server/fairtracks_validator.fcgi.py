@@ -36,8 +36,8 @@ DEFAULT_LOGGING_FORMAT = '%(asctime)-15s - [%(process)d][%(levelname)s] %(messag
 
 if __name__ == '__main__':
 	if len(sys.argv) > 1:
-		host = local_config.get('host',"0.0.0.0")
-		port = local_config.get('port',5000)
+		host = local_config.get('host', "0.0.0.0")
+		port = local_config.get('port', 5000)
 		debug = sys.argv[1] != 'standalone'
 		if debug:
 			logLevel = logging.DEBUG
@@ -47,7 +47,7 @@ if __name__ == '__main__':
 			except ValueError:
 				pass
 			
-			# Debug mode should not be tied to any interface
+			# Debug mode should be tied only to localhost
 			host = "127.0.0.1"
 		else:
 			logLevel = logging.INFO
