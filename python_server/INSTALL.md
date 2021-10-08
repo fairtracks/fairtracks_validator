@@ -1,6 +1,6 @@
 # FAIRification Genomic Data Tracks JSON Schema validation server install instructions
 
-The source code of this API is written for Python 3.6 or later. It depends on standard libraries, plus the ones declared in [requirements.txt](requirements.txt).
+The source code of this API is written for Python 3.7 or later. It depends on standard libraries, plus the ones declared in [requirements.txt](requirements.txt).
 
 * In order to install the dependencies you need `pip` and `venv` Python modules.
 	- In a Ubuntu clean installation, next packages are needed: `python3-venv`, `python3-dev`, `build-essential` and `git`.

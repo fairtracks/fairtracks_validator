@@ -28,7 +28,7 @@ from .background import BackgroundMulticastReceiver
 
 #class FAIRTracksValidatorSingleton(metaclass=SingletonMeta):
 class FAIRTracksValidatorSingleton(object):
-	APIVersion = "0.3.1"
+	APIVersion = "0.4.0"
 	HexSHAPattern = re.compile('^[0-9a-f]{2,}$')
 	CacheManifestFile = 'manifest.json'
 	
