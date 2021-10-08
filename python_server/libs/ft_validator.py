@@ -113,7 +113,7 @@ class FAIRTracksValidatorSingleton(object):
 		This method is called from command-line, so there is
 		no security check
 		"""
-		self.bmr.shutdown()
+		self.bmr.broadcast_shutdown()
 	
 	def _init_server(self):
 		# The server is initialized
@@ -337,7 +337,7 @@ class FAIRTracksValidatorSingleton(object):
 				schema_hash = curated_schema_info.get('schema_hash')
 				source_urls = curated_schema_info.get('source_urls')
 				
-				candidate_to_store = False
+				candidate_to_store = True
 				prev_curated_schema = None
 				if schema_hash is not None:
 					prev_curated_schema = curated_schemas_by_hash.get(schema_hash)
@@ -372,7 +372,7 @@ class FAIRTracksValidatorSingleton(object):
 			json.dump(self.manifest, mh)
 	
 	def validateCachedJSONSchemas(self):
-		cached_schemas = map(lambda curated_schema: {'schema': curated_schema['source'], 'file': curated_schema['info']['source_urls'][0], 'errors': curated_schema['info'].setdefault('errors',[])}, self._schemas.values())
+		cached_schemas = map(lambda curated_schema: {'schema': curated_schema.get('source'), 'file': curated_schema['info']['source_urls'][0], 'errors': curated_schema['info'].setdefault('errors',[])}, self._schemas.values())
 		self.fgv.loadJSONSchemas(*cached_schemas)
 		
 	
