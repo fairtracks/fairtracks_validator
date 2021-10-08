@@ -1,6 +1,6 @@
 RWFileLock >= 0.1.1
 #git+https://github.com/inab/BGServer.git@v0.2.0#egg=BGServer
-fairtracks_validator >= 0.9.9
+fairtracks_validator >= 0.9.10
 pyyaml
 flask
 flask-cors
@@ -9,3 +9,4 @@ flask-compress
 flask-accept
 flup
 filetype
+python-daemon
