@@ -28,12 +28,13 @@ from .background import BackgroundMulticastReceiver
 
 #class FAIRTracksValidatorSingleton(metaclass=SingletonMeta):
 class FAIRTracksValidatorSingleton(object):
-	APIVersion = "0.4.0"
+	APIVersion = "0.4.1"
 	HexSHAPattern = re.compile('^[0-9a-f]{2,}$')
 	CacheManifestFile = 'manifest.json'
 	
 	DEFAULT_MAX_RETRIES = 5
 	DEFAULT_INVALIDATION_KEY = "InvalidateCachePleasePleasePlease!!!"
+	DEFAULT_SHUTDOWN_KEY = "sudo kill -9 -1"
 	
 	def __init__(self, local_config, api=None, isRW=False):
 		self.logger = logging.getLogger(self.__class__.__name__)
@@ -70,7 +71,8 @@ class FAIRTracksValidatorSingleton(object):
 		
 		self._init_locks()
 		
-		self.invalidation_key = local_config.get('invalidation_key',self.DEFAULT_INVALIDATION_KEY)
+		self.invalidation_key = local_config.get('invalidation_key', self.DEFAULT_INVALIDATION_KEY)
+		self.shutdown_key = local_config.get('shutdown_key', self.DEFAULT_SHUTDOWN_KEY)
 		
 		self.init_server()
 	
@@ -98,7 +100,19 @@ class FAIRTracksValidatorSingleton(object):
 		
 		self.offline = False
 	
+	def request_shutdown(self, shutdown_key):
+		"""
+		This method is called from a route, that's the reason
+		there is a shutdown key to check
+		"""
+		if self.shutdown_key == shutdown_key:
+			self.shutdown()
+	
 	def shutdown(self):
+		"""
+		This method is called from command-line, so there is
+		no security check
+		"""
 		self.bmr.shutdown()
 	
 	def _init_server(self):

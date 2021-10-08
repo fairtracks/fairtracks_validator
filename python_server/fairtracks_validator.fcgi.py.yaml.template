@@ -7,6 +7,9 @@ port: 5000
 # The value of this key is used to check whether you are allowed to invalidate the cache
 invalidation_key: "InvalidateCachePleasePleasePlease!!!"
 
+# The value of this key is used to check whether you are allowed to invalidate the cache
+shutdown_key: "WouldYouShutDown,bitte???"
+
 # This key is the max size of uploaded files, in MB
 max_file_size: 1024
 

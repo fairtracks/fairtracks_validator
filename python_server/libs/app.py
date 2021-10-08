@@ -71,4 +71,4 @@ def init_validator_app(local_config):
 	#app.register_blueprint(blueprint,url_prefix='/api')
 	app.register_blueprint(blueprint,url_prefix='')
 	
-	return app
+	return app, FTValidator

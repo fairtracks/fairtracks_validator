@@ -30,12 +30,17 @@ with open(config_file,"r",encoding="utf-8") as cf:
 
 #print(f"JAO {os.environ.get('WERKZEUG_RUN_MAIN')}", file=sys.stderr)
 #sys.stderr.flush()
-app = libs.app.init_validator_app(local_config)
+app, ftv = libs.app.init_validator_app(local_config)
 
 DEFAULT_LOGGING_FORMAT = '%(asctime)-15s - [%(process)d][%(levelname)s] %(message)s'
 
 if __name__ == '__main__':
 	if len(sys.argv) > 1:
+		# This verb is used to shut down existing instances
+		# from command-line
+		if sys.argv[1] == 'shutdown':
+			ftv.shutdown()
+		
 		host = local_config.get('host', "0.0.0.0")
 		port = local_config.get('port', 5000)
 		debug = sys.argv[1] != 'standalone'

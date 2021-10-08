@@ -15,11 +15,27 @@ class FTVInfo(FTVResource):
 		'''List all schemas'''
 		return self.ftv.ftv_info()
 
+shutParser = NS.parser()
+shutParser.add_argument('shutdown_key', type=str, location='json', required=True, help='The shutdown key')
+
+@NS.param('shutdown_key', 'The shutdown key', _in='body')
+class FTVShutdown(FTVResource):
+	'''It shuts down the server instances, forcing them to reload'''
+	@NS.response(201, 'Shutdown in progress')
+	@NS.response(403, 'Wrong shutdown key')
+	@NS.doc('ftv_shutdown')
+	def post(self):
+		'''It shuts down the server instances, useful for debugging purposes'''
+		pArgs = shutParser.parse_args()
+		http_code = 201  if self.ftv.request_shutdown(pArgs.get('shutdown_key')) else 403
+		return [], http_code
+
 ROUTES={
 	'ns': NS,
 	'path': '/',
 	# Nothing done (yet!)
 	'routes': [
-		(FTVInfo,'info')
+		(FTVInfo, 'info'),
+		(FTVShutdown, 'shutdown'),
 	]
 }
