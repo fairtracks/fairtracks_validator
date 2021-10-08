@@ -19,26 +19,33 @@ class AbstractSchemasInvalidate(FTVResource):
 	'''It invalidates the cached schemas'''
 	def invalidate(self,invalidation_key,invalidateExtensionsCache):
 		'''It invalidates the cached JSON schemas, forcing to fetch them again'''
-		http_code = 200  if self.ftv.invalidate_cache(invalidation_key,invalidateExtensionsCache) else 403
+		http_code = 201  if self.ftv.invalidate_cache(invalidation_key,invalidateExtensionsCache) else 403
 		return [], http_code
 
-class SchemasInvalidate(AbstractSchemasInvalidate):
+invParser = SCHEMAS_NS.parser()
+invParser.add_argument('invalidation_key', type=str, location='json', required=True, help='The invalidation key')
+
+@SCHEMAS_NS.param('invalidation_key', 'The invalidation key', _in='body')
+class NGSchemasInvalidate(AbstractSchemasInvalidate):
 	'''It invalidates the cached schemas'''
-	@SCHEMAS_NS.response(200, 'Cached JSON Schemas have been fetched again')
+	@SCHEMAS_NS.response(201, 'Invalidation and re-caching in progress')
 	@SCHEMAS_NS.response(403, 'Wrong invalidation key')
-	@SCHEMAS_NS.doc('schemas_invalidate')
-	def delete(self,invalidation_key):
+	@SCHEMAS_NS.doc('ng_schemas_invalidate')
+	def delete(self):
 		'''It invalidates the cached JSON schemas, forcing to fetch them again'''
-		return self.invalidate(invalidation_key,False)
+		pArgs = invParser.parse_args()
+		return self.invalidate(pArgs.get('invalidation_key'), False)
 	
-class SchemasFullInvalidate(AbstractSchemasInvalidate):
+@SCHEMAS_NS.param('invalidation_key', 'The invalidation key', _in='body')
+class NGSchemasFullInvalidate(AbstractSchemasInvalidate):
 	'''It fully invalidates the cached schemas'''
-	@SCHEMAS_NS.response(200, 'Cached JSON Schemas have been fetched again')
+	@SCHEMAS_NS.response(201, 'Invalidation and re-caching in progress')
 	@SCHEMAS_NS.response(403, 'Wrong invalidation key')
-	@SCHEMAS_NS.doc('schemas_invalidate')
-	def delete(self,invalidation_key):
+	@SCHEMAS_NS.doc('ng_schemas_invalidate_full')
+	def delete(self):
 		'''It invalidates the cached JSON schemas, forcing to fetch them again'''
-		return self.invalidate(invalidation_key,True)
+		pArgs = invParser.parse_args()
+		return self.invalidate(pArgs.get('invalidation_key'),True)
 
 @SCHEMAS_NS.response(404, 'Schema not found')
 @SCHEMAS_NS.param('schema_hash', 'The schema hash')
@@ -65,8 +72,8 @@ ROUTES={
 	'path': '/schemas',
 	'routes': [
 		(SchemasList,''),
-		(SchemasInvalidate,'/invalidate/<string:invalidation_key>'),
-		(SchemasFullInvalidate,'/invalidate/<string:invalidation_key>/full'),
+		(NGSchemasInvalidate,'/invalidate'),
+		(NGSchemasFullInvalidate,'/invalidate/full'),
 		(SchemaInfo,'/<string:schema_hash>'),
 		(Schema,'/<string:schema_hash>/schema')
 	]

@@ -10,7 +10,14 @@ invalidation_key: "InvalidateCachePleasePleasePlease!!!"
 # This key is the max size of uploaded files, in MB
 max_file_size: 1024
 
-# This keys hold the list of schemas to be mirrored and validated
+# These keys set up the back channel to receive a shutdown from the
+# background thread which rebuilds the caches
+backchannel:
+  multicast-group: '224.1.1.1'
+  multicast-port: 5007
+  is-all-groups: false
+
+# These keys hold the list of schemas to be mirrored and validated
 schemas:
   - https://raw.githubusercontent.com/fairtracks/fairtracks_standard/master/json/schema/fairtracks.schema.json
   - https://raw.githubusercontent.com/fairtracks/fairtracks_standard/master/json/schema/fairtracks_experiment.schema.json

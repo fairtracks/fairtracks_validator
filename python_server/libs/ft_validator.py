@@ -23,6 +23,10 @@ from fairtracks_validator.fairtracks_validator import FairGTracksValidator
 
 from RWFileLock import RWFileLock , LockError
 
+from .singleton import SingletonMeta
+from .background import BackgroundMulticastReceiver
+
+#class FAIRTracksValidatorSingleton(metaclass=SingletonMeta):
 class FAIRTracksValidatorSingleton(object):
 	APIVersion = "0.3.1"
 	HexSHAPattern = re.compile('^[0-9a-f]{2,}$')
@@ -31,9 +35,15 @@ class FAIRTracksValidatorSingleton(object):
 	DEFAULT_MAX_RETRIES = 5
 	DEFAULT_INVALIDATION_KEY = "InvalidateCachePleasePleasePlease!!!"
 	
-	def __init__(self,local_config,api=None):
+	def __init__(self, local_config, api=None, isRW=False):
 		self.logger = logging.getLogger(self.__class__.__name__)
+		
+		# First of all, start the background shutdown thread
+		bmr = BackgroundMulticastReceiver(local_config)
+		
+		self.bmr = bmr
 		self.api = api
+		self.isRW = isRW
 		self.max_retries = self.DEFAULT_MAX_RETRIES
 		
 		# This variable should be honoured by the API
@@ -50,21 +60,27 @@ class FAIRTracksValidatorSingleton(object):
 			atexit.register(shutil.rmtree, self.cacheDir, ignore_errors=True)
 			self.config['cacheDir'] = self.cacheDir
 		
+		if not os.path.isdir(self.cacheDir):
+			os.makedirs(self.cacheDir)
+		
 		self.schemaCacheDir = os.path.join(self.cacheDir,'schema_cache')
 		
 		if not os.path.isdir(self.schemaCacheDir):
 			os.makedirs(self.schemaCacheDir)
 		
+		self._init_locks()
+		
+		self.invalidation_key = local_config.get('invalidation_key',self.DEFAULT_INVALIDATION_KEY)
+		
+		self.init_server()
+	
+	def _init_locks(self):
 		schemaCacheLockFile = os.path.join(self.cacheDir,'schema_cache.lock')
 		extensionsCacheLockFile = os.path.join(self.cacheDir,'extensions_cache.lock')
 		
 		self.SchemaCacheLock = RWFileLock(filename=schemaCacheLockFile)
 		
 		self.ExtensionsCacheLock = RWFileLock(filename=extensionsCacheLockFile)
-		
-		self.invalidation_key = local_config.get('invalidation_key',self.DEFAULT_INVALIDATION_KEY)
-		
-		self.init_server()
 	
 	def init_server(self):
 		self.offline = True
@@ -76,13 +92,18 @@ class FAIRTracksValidatorSingleton(object):
 			#print(f"warming up {os.getpid()}", file=sys.stderr)
 			#traceback.print_stack()
 			#sys.stderr.flush()
-			self.fgv.warmUpCaches()
+			if self.isRW:
+				self.fgv.invalidateCaches()
+				self.fgv.warmUpCaches()
 		
 		self.offline = False
 	
+	def shutdown(self):
+		self.bmr.shutdown()
+	
 	def _init_server(self):
 		# The server is initialized
-		self.fgv = FairGTracksValidator(config=self.config, isRW=False)
+		self.fgv = FairGTracksValidator(config=self.config, isRW=self.isRW)
 		
 		# Do this in a separate thread
 		self.init_cache()
@@ -404,22 +425,47 @@ class FAIRTracksValidatorSingleton(object):
 		if self.invalidation_key == invalidation_key:
 			self.offline = True
 			
-			# Removing only the schemas cache
-			with self.SchemaCacheLock.exclusive_blocking_lock():
-				for elem in os.scandir(path=self.schemaCacheDir):
-					if elem.is_dir() and not elem.is_symlink():
-						shutil.rmtree(elem.path, ignore_errors=True)
-					else:
-						os.remove(elem.path)
+			transient_local_config = self.config.copy()
+			transient_cache_dir = self.cacheDir + '_transient'
+			transient_local_config['cacheDir'] = transient_cache_dir
 			
-			# Also removing the extensions cache
-			if invalidateExtensionsCache:
-				with self.ExtensionsCacheLock.exclusive_blocking_lock():
-					self.ftv.invalidateCaches()
+			retval = not os.path.exists(transient_cache_dir)
+			if not retval:
+				# let's check whether we can gain control there
+				bslock = self.bmr.getRebuildLock(transient_cache_dir)
+				try:
+					bslock.w_lock()
+					# Now, let's remove the stale directory
+					shutil.rmtree(transient_cache_dir, ignore_errors=True)
+					# and flag accordingly
+					retval = True
+				except LockError as le:
+					# We should do nothing, as there
+					# is work in progress
+					pass
+				finally:
+					if(bslock.isLocked):
+						bslock.unlock()
+					del bslock
+			if retval:
+				if not invalidateExtensionsCache:
+					with self.SchemaCacheLock.exclusive_blocking_lock(), \
+						self.ExtensionsCacheLock.exclusive_blocking_lock():
+					
+						# First, copy everything
+						shutil.copytree(self.cacheDir, transient_cache_dir)
+						# Second, remove what we are not interested in
+						for elem in os.scandir(path=os.path.join(transient_cache_dir, 'schema_cache')):
+							if elem.is_dir() and not elem.is_symlink():
+								shutil.rmtree(elem.path, ignore_errors=True)
+							else:
+								os.remove(elem.path)
+				
+				self.bmr.background_rebuild_caches(transient_local_config, self)
 			
-			self.init_server()
+			self.offline = False
 			
-			return True
+			return retval
 		else:
 			return False
 	
